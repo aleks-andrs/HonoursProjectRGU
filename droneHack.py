@@ -5,6 +5,11 @@ import tkinter as tk
 from tkinter import font  as tkfont
 from tkinter import ttk
 
+import pexpect
+import _thread
+import time
+
+
 class DroneHack(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -42,7 +47,7 @@ class DroneHack(tk.Tk):
         container.grid_rowconfigure(0, weight = 1)
         container.grid_columnconfigure(0, weight = 1)
         self.frames = {}
-        self.pages = {MainPage, AboutPage, SettingsPage}
+        self.pages = {MainPage, StartPage, AboutPage, SettingsPage}
         for F in self.pages:
             page_name = F.__name__
             frame = F(parent=container, controller=self)
@@ -53,6 +58,10 @@ class DroneHack(tk.Tk):
         self.bind('<Escape>', self.exit_full_screen)
         self.bind('<F11>', self.enter_full_screen)
         self.bind('<Control-q>', self.shut_down)
+
+        #application default values
+        self.wirelessCard = "wlan1"
+        self.monitorModeWirelessCard = "wlan1mon"
 
         #display Main page
         self.show_frame("MainPage")
@@ -69,6 +78,8 @@ class DroneHack(tk.Tk):
                 self.unbind('3')
             elif (page_name.__eq__("SettingsPage")):
                 self.unbind('3')
+            elif (page_name.__eq__("StartPage")):
+                self.show_loading_screen()
 
 
     def exit_full_screen(self, *args):
@@ -88,6 +99,9 @@ class DroneHack(tk.Tk):
                 frame.configure(background = '#000000',
                             padx = self.x0,
                             pady = 100)
+                
+    def show_loading_screen(self):
+        print("ok")
             
     def shut_down(self, *args):
         self.destroy()
@@ -203,8 +217,9 @@ class MainPage(tk.Frame):
         optionsEmptyLineMPLabel.grid(row = 0, column = 20, sticky='nsew')
 
         startMPButton = ttk.Button(optionsMPFrame,
-                                 text = "[ 1 ] Start     ",
-                                 style = 'TButton')
+                                   text = "[ 1 ] Start     ",
+                                   style = 'TButton',
+                                   command = lambda: controller.show_frame("StartPage"))
         startMPButton.grid(row=1, column = 10, sticky='w')
 
         aboutMPButton = ttk.Button(optionsMPFrame,
@@ -285,7 +300,7 @@ class SettingsPage(tk.Frame):
                        padx = controller.x0,
                        pady = 100)
         
-        #bash code
+        #bash command
         bashCommand = "ifconfig"
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
@@ -298,13 +313,68 @@ class SettingsPage(tk.Frame):
         
         #exit button
         exitSPButton = ttk.Button(self,
-                                            text = "Back to main page",
-                                            style = 'TButton',
-                                            command = lambda: controller.show_frame("MainPage"))
+                                  text = "Back to main page",
+                                  style = 'TButton',
+                                  command = lambda: controller.show_frame("MainPage"))
         exitSPButton.grid(row = 1, column = 0, sticky = 'nsew')
-
         
+class StartPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.configure(background = '#000000',
+                       padx = controller.x0,
+                       pady = 100)
 
+        self.outputStPText = tk.Text(self, height=12, width=100, background="blue")
+        self.outputStPText.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        scanStPButton = ttk.Button(self,
+                                 text = "Scan for networks",
+                                 style = 'TButton',
+                                 command = self.start_thread)
+
+        scanStPButton.grid(row = 1, column = 0, sticky = 'nsew')
+
+        testStPButton = ttk.Button(self,
+                                 text = "Emergency stop",
+                                 style = 'TButton',
+                                 command = self.stop_thread)
+        testStPButton.grid(row = 2, column = 0, sticky = 'nsew')
+
+    def start_thread(self):
+        _thread.start_new_thread(self.start_monitor_mode, ())
+
+    def stop_thread(self):
+        _thread.exit()
+        
+    def start_monitor_mode(self):
+        #bash command for network process kill
+        #bashCommand = "timeout 5 airodump-ng wlan1"
+        #process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        #output, error = process.communicate()
+        #x=0
+        #print(error)
+        #print(output)
+        testText = "Application test run"
+        self.outputStPText.insert(tk.END, testText)
+
+    def scan_networks(self):
+        #bash command for network scan
+        '''
+        bashCommand = "timeout 3 airodump-ng wlan1"
+        process = subprocess.check_output(["timeout", "3", "airodump-ng", "wlan1"]) #Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        #output, error = process.communicate()
+        x=0
+        #print(error)
+        #print(output)
+        self.outputStPText.insert(tk.END, process)'''
+        print("Starting up Airodump-ng")
+        cmd_airodump = pexpect.spawn('airodump-ng wlan1 --output-format csv -w data')
+        cmd_airodump.expect([pexpect.TIMEOUT, pexpect.EOF], 5)
+        print("Airodump-ng Stopping...")
+        cmd_airodump.close()
+	
 if __name__ == "__main__":
     app = DroneHack()
     app.mainloop()
