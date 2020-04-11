@@ -35,11 +35,21 @@ class DroneHack(tk.Tk):
         self.attributes("-fullscreen", True)
 
         #calculate screen size
-        self.x0 = self.winfo_screenwidth()/2 - 410
+        self.x0 = self.winfo_screenwidth()/2 
         self.y0 = self.winfo_screenheight()/2
         self.geometry("+100+100")
-        #print(self.x0) #test output
-        #print(self.y0)
+        print(self.x0) #test output
+        print(self.y0)
+
+        self.screenType = ""
+        #assign screen type (small/large)
+        if (self.x0 < 410):
+            self.screenType = "small"
+        else:
+            self.screenType = "large"
+            
+        #center the screen
+        self.xPadding = self.x0 - 410
 
         #store frames in container
         container = tk.Frame(self)
@@ -78,18 +88,17 @@ class DroneHack(tk.Tk):
                 self.unbind('3')
             elif (page_name.__eq__("SettingsPage")):
                 self.unbind('3')
-            elif (page_name.__eq__("StartPage")):
-                self.show_loading_screen()
 
 
     def exit_full_screen(self, *args):
         if(self.attributes("-fullscreen")):
-            self.attributes("-fullscreen", False)
             for P in self.pages:
                 frame = self.frames[P.__name__]
                 frame.configure(background = '#000000',
                             padx = 10,
                             pady = 10)
+            self.attributes("-fullscreen", False)
+
 
     def enter_full_screen(self, *args):
         if(not self.attributes("-fullscreen")):
@@ -97,11 +106,8 @@ class DroneHack(tk.Tk):
             for P in self.pages:
                 frame = self.frames[P.__name__]
                 frame.configure(background = '#000000',
-                            padx = self.x0,
+                            padx = self.xPadding,
                             pady = 100)
-                
-    def show_loading_screen(self):
-        print("ok")
             
     def shut_down(self, *args):
         self.destroy()
@@ -118,103 +124,115 @@ class MainPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.configure(background = '#000000',
-                       padx = controller.x0,
+                       padx = controller.xPadding,
                        pady = 100)
+
+        #scrollable canvas
+        holdMPCanvas = tk.Canvas(self, background = '#000000', scrollregion=(0, 0, 1000, 1000))
+        holdMPCanvas.grid(row = 0, column = 0, sticky='nsew')
+
+        hbar = tk.Scrollbar(holdMPCanvas,orient = tk.VERTICAL, background = '#009900')
+        hbar.grid(row = 0, column = 1, rowspan = 1, sticky='ns')
+        hbar.config(command=holdMPCanvas.yview)
+        holdMPCanvas.config(yscrollcommand=hbar.set)
+
+
         
         #internal frames
-        logoMPFrame = tk.Frame(self, background = '#000000')
-        optionsMPFrame = tk.Frame(self, background = '#000000')
+        logoMPFrame = tk.Frame(holdMPCanvas, background = '#000000')
+        optionsMPFrame = tk.Frame(holdMPCanvas, background = '#000000')
         logoMPFrame.grid(row = 0, column = 0, sticky='nsew')
         optionsMPFrame.grid(row = 1, column = 0, sticky='nsew')
 
-        #frame containing logo
-        logoEmptyLineMPLabel = tk.Label(optionsMPFrame,
-                         text = " ",
-                         background = '#000000',
-                         foreground = '#00ff41',
-                         font=controller.text_font)
-        logoEmptyLineMPLabel.grid(row = 0, column = 20, sticky='nsew')
-     
+        # display frame containing logo for large screen devices
+        if(controller.screenType == "large"):
+            logoEmptyLineMPLabel = tk.Label(optionsMPFrame,
+                             text = " ",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoEmptyLineMPLabel.grid(row = 0, column = 20, sticky='nsew')
+         
+            
+            logo1 = tk.Label(logoMPFrame,
+                             text = "==============================================================",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logo1.grid(row = 1, column = 0, columnspan = 20, sticky='nsew')
+
+            logo2 = tk.Label(logoMPFrame,
+                             text = "#",
+                             background = '#000000',
+                             foreground = '#0000ff',
+                             font=controller.text_font)
+            logo2.grid(row = 2, column = 19, sticky='nsew')
+
+            logo3 = tk.Label(logoMPFrame,
+                             text = "#",
+                             background = '#000000',
+                             foreground = '#0000ff',
+                             font=controller.text_font)
+            logo3.grid(row = 3, column = 0, sticky='nsew')
+
+            logo4 = tk.Label(logoMPFrame,
+                             text = "#",
+                             background = '#000000',
+                             foreground = '#0000ff',
+                             font=controller.text_font)
+            logo4.grid(row = 4, column = 1, sticky='nsew')
+
+            logo5 = tk.Label(logoMPFrame,
+                             text = "L",
+                             background = '#000000',
+                             foreground = '#0000ff',
+                             font=controller.text_font)
+            logo5.grid(row = 5, column = 2, sticky='nsew')
+            
+            logo6 = tk.Label(logoMPFrame,
+                             text = "#",
+                             background = '#000000',
+                             foreground = '#0000ff',
+                             font=controller.text_font)
+            logo6.grid(row = 6, column = 3, sticky='nsew')
+            
+            logo7 = tk.Label(logoMPFrame,
+                             text = "#",
+                             background = '#000000',
+                             foreground = '#0000ff',
+                             font=controller.text_font)
+            logo7.grid(row = 7, column = 4, sticky='nsew')
+            
+            logo8 = tk.Label(logoMPFrame,
+                             text = "#",
+                             background = '#000000',
+                             foreground = '#0000ff',
+                             font=controller.text_font)
+            logo8.grid(row = 8, column = 5, sticky='nsew')
+            
+            logo100 = tk.Label(logoMPFrame,
+                             text = "==============================================================",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logo100.grid(row = 9, column = 0, columnspan = 20, sticky='nsew')
+
+            #logo frame dimensions set up
+            col_count, row_count = logoMPFrame.grid_size()
+            for col in range(col_count):
+                logoMPFrame.grid_columnconfigure(col, minsize = 20)
+
+            for row in range(row_count):
+                logoMPFrame.grid_rowconfigure(row, minsize = 20)
+
         
-        logo1 = tk.Label(logoMPFrame,
-                         text = "==============================================================",
-                         background = '#000000',
-                         foreground = '#00ff41',
-                         font=controller.text_font)
-        logo1.grid(row = 1, column = 0, columnspan = 20, sticky='nsew')
-
-        logo2 = tk.Label(logoMPFrame,
-                         text = "#",
-                         background = '#000000',
-                         foreground = '#0000ff',
-                         font=controller.text_font)
-        logo2.grid(row = 2, column = 19, sticky='nsew')
-
-        logo3 = tk.Label(logoMPFrame,
-                         text = "#",
-                         background = '#000000',
-                         foreground = '#0000ff',
-                         font=controller.text_font)
-        logo3.grid(row = 3, column = 0, sticky='nsew')
-
-        logo4 = tk.Label(logoMPFrame,
-                         text = "#",
-                         background = '#000000',
-                         foreground = '#0000ff',
-                         font=controller.text_font)
-        logo4.grid(row = 4, column = 1, sticky='nsew')
-
-        logo5 = tk.Label(logoMPFrame,
-                         text = "L",
-                         background = '#000000',
-                         foreground = '#0000ff',
-                         font=controller.text_font)
-        logo5.grid(row = 5, column = 2, sticky='nsew')
-        
-        logo6 = tk.Label(logoMPFrame,
-                         text = "#",
-                         background = '#000000',
-                         foreground = '#0000ff',
-                         font=controller.text_font)
-        logo6.grid(row = 6, column = 3, sticky='nsew')
-        
-        logo7 = tk.Label(logoMPFrame,
-                         text = "#",
-                         background = '#000000',
-                         foreground = '#0000ff',
-                         font=controller.text_font)
-        logo7.grid(row = 7, column = 4, sticky='nsew')
-        
-        logo8 = tk.Label(logoMPFrame,
-                         text = "#",
-                         background = '#000000',
-                         foreground = '#0000ff',
-                         font=controller.text_font)
-        logo8.grid(row = 8, column = 5, sticky='nsew')
-        
-        logo100 = tk.Label(logoMPFrame,
-                         text = "==============================================================",
-                         background = '#000000',
-                         foreground = '#00ff41',
-                         font=controller.text_font)
-        logo100.grid(row = 9, column = 0, columnspan = 20, sticky='nsew')
-
-        #logo frame dimensions set up
-        col_count, row_count = logoMPFrame.grid_size()
-        for col in range(col_count):
-            logoMPFrame.grid_columnconfigure(col, minsize = 20)
-
-        for row in range(row_count):
-            logoMPFrame.grid_rowconfigure(row, minsize = 20)
-
-
         #options menu frame
         optionsEmptyLineMPLabel = tk.Label(optionsMPFrame,
                          text = " ",
                          background = '#000000',
                          foreground = '#00ff41',
                          font=controller.text_font)
-        optionsEmptyLineMPLabel.grid(row = 0, column = 20, sticky='nsew')
+        optionsEmptyLineMPLabel.grid(row = 0, column = 20)
 
         startMPButton = ttk.Button(optionsMPFrame,
                                    text = "[ 1 ] Start     ",
@@ -240,7 +258,7 @@ class MainPage(tk.Frame):
                                    command = controller.shut_down)
         shutDownMPButton.grid(row = 4, column = 10, sticky='w')
         
-            
+        
         #options frame dimensions
         col_count, row_count = optionsMPFrame.grid_size()
         for col in range(col_count):
@@ -248,6 +266,8 @@ class MainPage(tk.Frame):
 
         for row in range(row_count):
             optionsMPFrame.grid_rowconfigure(row, minsize = 50)
+
+        holdMPCanvas.configure(scrollregion=holdMPCanvas.bbox(tk.ALL))
         
 
 class AboutPage(tk.Frame):
@@ -255,7 +275,7 @@ class AboutPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.configure(background = '#000000',
-                       padx = controller.x0,
+                       padx = controller.xPadding,
                        pady = 100)
 
         #internal frames for text and buttons
@@ -297,8 +317,12 @@ class SettingsPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.configure(background = '#000000',
-                       padx = controller.x0,
+                       padx = controller.xPadding,
                        pady = 100)
+
+        #internal frames
+        displySPFrame = tk.Frame(self, background = '#000000')
+        displySPFrame.grid(row = 0, column = 0, sticky='nsew')
         
         #bash command
         bashCommand = "ifconfig"
@@ -306,13 +330,13 @@ class SettingsPage(tk.Frame):
         output, error = process.communicate()
         
         #display area
-        infoSPText = tk.Text(self, height=12, width=100, background="blue")
+        infoSPText = tk.Text(displySPFrame, height=12, width=100, background="blue")
         infoSPText.grid(row = 0, column = 0, columnspan = 10, sticky = 'nsew')
         infoSPText.tag_config("here", background="blue", foreground="green")
         infoSPText.insert(1.0, output)
         
         #exit button
-        exitSPButton = ttk.Button(self,
+        exitSPButton = ttk.Button(displySPFrame,
                                   text = "Back to main page",
                                   style = 'TButton',
                                   command = lambda: controller.show_frame("MainPage"))
@@ -323,7 +347,7 @@ class StartPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.configure(background = '#000000',
-                       padx = controller.x0,
+                       padx = controller.xPadding,
                        pady = 100)
 
         self.outputStPText = tk.Text(self, height=12, width=100, background="blue")
