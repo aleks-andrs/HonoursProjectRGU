@@ -7,10 +7,44 @@ from tkinter import ttk
 
 import pexpect
 import _thread
+import sys
 import time
 
+class AccessPoint:
+    #access point object
+    def __init__(self, connectionArray, counter):
+        self.BSSID = connectionArray[0]
+        self.channel = connectionArray[3]
+        self.privacyType = connectionArray[5]
+        self.power = connectionArray[8]
+        if connectionArray[13] == " ":
+            self.ESSID = " N/A "
+        else:
+            self.ESSID = connectionArray[13]
+        self.c = str(counter)
 
-class DroneHack(tk.Tk):
+    def APtoString(self):
+        if self.c != "0":
+            print("MAC address: " + self.BSSID + "; channel:" + self.channel +
+                  "; power:" + self.power + "; ENC:" + self.privacyType + "; name:" +
+                  self.ESSID)
+
+class ClientComs:
+    #client communications object
+    def __init__(self, connectionArray, counter):
+        self.power = connectionArray[3]
+        self.MAC = connectionArray[0]
+        self.packets = connectionArray[4]
+        if connectionArray[5] == " ":
+            self.BSSID = " N/A "
+        else:
+            self.BSSID = connectionArray[5]
+        self.c = str(counter)
+
+    def CCtoString(self):
+        print("Station MAC:" + self.MAC + "; packets:" + self.packets)
+
+class DroneHackApp(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -79,7 +113,7 @@ class DroneHack(tk.Tk):
     def show_frame(self, page_name):
             frame = self.frames[page_name]
             frame.tkraise()
-            #various keyboard button handlers for each frame
+            #keyboard button handlers for each frame
             if (page_name.__eq__("MainPage")):
                 self.bind('2', (lambda event: self.show_frame("SettingsPage")))
                 self.bind('3', (lambda event: self.show_frame("AboutPage")))
@@ -108,6 +142,24 @@ class DroneHack(tk.Tk):
                 frame.configure(background = '#000000',
                             padx = self.xPadding,
                             pady = 100)
+
+    def readCSV(filename):
+        #csv file reader
+        with open(filename,'r') as f:
+            fileContents = f.read()
+        parts = fileContents.split('\r\n\r\n')
+        entries = parts[0]
+        
+        if sys.version_info[0] < 3:
+            from StringIO import StringIO
+        else:
+            from io import StringIO
+        
+        entriesStr = StringIO(entries)
+        readerObj = csv.reader(entriesStr)
+        entryList = list(readerObj)
+        connectionsList = [i for i in entryList if i != []]
+        return connectionsList
             
     def shut_down(self, *args):
         self.destroy()
@@ -400,5 +452,5 @@ class StartPage(tk.Frame):
         cmd_airodump.close()
 	
 if __name__ == "__main__":
-    app = DroneHack()
+    app = DroneHackApp()
     app.mainloop()
