@@ -5,8 +5,9 @@ from tkinter import font  as tkfont
 from tkinter import ttk
 import os
 import sys
+import csv
 import subprocess
-import pexpect
+#import pexpect
 import _thread
 import time
 
@@ -21,13 +22,15 @@ class AccessPoint:
             self.ESSID = " N/A "
         else:
             self.ESSID = connectionArray[13]
-        self.c = str(counter)
+        self.c = str(counter)        
 
     def APtoString(self):
         if self.c != "0":
-            print("MAC address: " + self.BSSID + "; channel:" + self.channel +
+            return("MAC address: " + self.BSSID + "; channel:" + self.channel +
                   "; power:" + self.power + "; ENC:" + self.privacyType + "; name:" +
                   self.ESSID)
+        else:
+            return(" ")
 
 class ClientComs:
     #client communications object
@@ -42,7 +45,10 @@ class ClientComs:
         self.c = str(counter)
 
     def CCtoString(self):
-        print("Station MAC:" + self.MAC + "; packets:" + self.packets)
+        if self.c != "0":
+            return("Station MAC:" + self.MAC + "; packets:" + self.packets)
+        else:
+            return(" ")
 
 class CurrentConfiguration:
     #current device configuration
@@ -111,6 +117,8 @@ class DroneHackApp(tk.Tk):
         #application default settings
         self.interfaces = []
         self.updateInterfaces()
+        self.listOfAP = []
+        self.listOfCC = []
 
         #store frames in container
         container = tk.Frame(self)
@@ -169,7 +177,7 @@ class DroneHackApp(tk.Tk):
                             padx = self.xPadding,
                             pady = 100)
 
-    def readCSV(filename):
+    def readCSV(self, filename):
         #csv file reader
         with open(filename,'r') as f:
             fileContents = f.read()
@@ -415,8 +423,8 @@ class SettingsPage(tk.Frame):
                        pady = 100)
 
         #internal frames
-        displySPFrame = tk.Frame(self, background = '#000000')
-        displySPFrame.grid(row = 0, column = 0, sticky='nsew')
+        displaySPFrame = tk.Frame(self, background = '#000000')
+        displaySPFrame.grid(row = 0, column = 0, sticky='nsew')
         
         #bash command
         bashCommand = "ifconfig"
@@ -424,13 +432,13 @@ class SettingsPage(tk.Frame):
         output, error = process.communicate()
         
         #display area
-        infoSPText = tk.Text(displySPFrame, height=12, width=100, background="blue")
+        infoSPText = tk.Text(displaySPFrame, height=12, width=100, background="blue")
         infoSPText.grid(row = 0, column = 0, columnspan = 10, sticky = 'nsew')
         infoSPText.tag_config("here", background="blue", foreground="green")
         infoSPText.insert(1.0, output)
         
         #exit button
-        exitSPButton = ttk.Button(displySPFrame,
+        exitSPButton = ttk.Button(displaySPFrame,
                                   text = "Back to main page",
                                   style = 'TButton',
                                   command = lambda: controller.show_frame("MainPage"))
@@ -527,17 +535,17 @@ class SelectionPage(tk.Frame):
                                    command = lambda: controller.show_frame("ScanNetworkPage"))
         scanSePButton.grid(row = 1, column = 0, sticky='nsew')
 
-        SingleAttackSePButton = ttk.Button(self,
+        singleAttackSePButton = ttk.Button(self,
                                            text = "Run single attack",
                                            style = 'TButton',
                                            command = lambda: controller.show_frame("SingleAttackPage"))
-        SingleAttackSePButton.grid(row = 2, column = 0, sticky='nsew')
+        singleAttackSePButton.grid(row = 2, column = 0, sticky='nsew')
 
-        BroadcastSePButton = ttk.Button(self,
+        broadcastSePButton = ttk.Button(self,
                                         text = "Run broadcast attack",
                                         style = 'TButton',
                                         command = lambda: controller.show_frame("BroadcastAttackPage"))
-        BroadcastSePButton.grid(row = 3, column = 0, sticky='nsew')
+        broadcastSePButton.grid(row = 3, column = 0, sticky='nsew')
 
         mainPageSePButton = ttk.Button(self,
                                        text = "Main page",
@@ -555,6 +563,78 @@ class ScanNetworkPage(tk.Frame):
                        padx = controller.xPadding,
                        pady = 100)
 
+        self.scanResults = []
+
+        #display area
+        self.netsSNPText = tk.Text(self, height = 20, background = "blue")
+        self.netsSNPText.grid(row = 0, column = 0, sticky = 'nsew')
+        self.netsSNPText.tag_config("here", background="blue", foreground = "green")
+        self.netsSNPText.insert(1.0, "Scan networks")
+
+        #scan button
+        startScanSNPButton = ttk.Button(self,
+                                        text = "Scan networks",
+                                        style = 'TButton',
+                                        command = lambda: self.scanNetworks(5))
+        startScanSNPButton.grid(row = 1, column = 0, sticky = 'nsew')
+
+
+
+        #return button
+        returnSNPButton = ttk.Button(self,
+                                     text = "Return",
+                                     style = 'TButton',
+                                     command = lambda: controller.show_frame("SelectionPage"))
+        returnSNPButton.grid(row = 2, column = 0, sticky='nsew')
+        
+
+    def scanNetworks(self, seconds):
+        #bash command for network scan
+        bashCommand = "timeout 7 airodump-ng -w netOutput --output-format csv wlan1mon"
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        
+        #read results from csv file
+        try:
+            self.scanResults = self.controller.readCSV("netOutput-01.csv")
+
+            try:
+                os.remove("netOutput-01.csv")
+            except:
+                True
+        
+            #length counters
+            counterAP = 0
+            counterCC = 0
+
+            #save results as objects
+            for connection in self.scanResults:
+                #access points
+                if len(connection) == 15:
+                    newAccessPoint = AccessPoint(connection, counterAP)
+                    self.controller.listOfAP.append(newAccessPoint)
+                    counterAP += 1
+                    
+                #connections
+                if len(connection)==7:
+                    newClientComs = ClientComs(connection, counterCC)
+                    self.controller.listOfCC.append(newClientComs)
+                    counterCC += 1
+
+            #display results
+            self.netsSNPText.delete(1.0, tk.END)
+            for AP in self.controller.listOfAP:
+                tempStr = AP.APtoString() + "\n\n"
+                self.netsSNPText.insert(tk.END, tempStr)
+            
+            for CC in self.controller.listOfCC:
+                tempStr = CC.CCtoString() + "\n\n"
+                self.netsSNPText.insert(tk.END, tempStr)
+
+        except:
+            self.netsSNPText.delete(1.0, tk.END)
+            self.netsSNPText.insert(1.0, "Unable to read CSV file, check your permissions")
+
 
 class SingleAttackPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -563,6 +643,47 @@ class SingleAttackPage(tk.Frame):
         self.configure(background = '#000000',
                        padx = controller.xPadding,
                        pady = 100)
+
+        #display area
+        self.detailsSAPText = tk.Text(self, height = 20, background = "blue")
+        self.detailsSAPText.grid(row = 0, column = 0, sticky = 'nsew')
+        self.detailsSAPText.tag_config("here", background="blue", foreground = "green")
+        self.detailsSAPText.insert(1.0, "Run single DoS attack\nREFRESH TO UPDATE LIST")
+
+        #refresh button
+        refreshSAPButton = ttk.Button(self,
+                                      text = "Refresh",
+                                      style = 'TButton',
+                                      command = lambda: self.refreshSA())
+        refreshSAPButton.grid(row = 1, column = 0, sticky = 'nsew')
+
+        #return button
+        returnSAPButton = ttk.Button(self,
+                                     text = "Return",
+                                     style = 'TButton',
+                                     command = lambda: controller.show_frame("SelectionPage"))
+        returnSAPButton.grid(row = 2, column = 0, sticky='nsew')
+
+    def refreshSA(self):
+        if len(self.controller.listOfAP) < 1:
+            self.detailsSAPText.delete(1.0, tk.END)
+            self.detailsSAPText.insert(1.0, "NO ACCESS POINTS FOUND\nPlease perform a network scan")
+        else:
+            #record a number of access points
+            numberOfAP = len(self.controller.listOfAP)
+            #display access points
+            self.detailsSAPText.delete(1.0, tk.END)
+            for AP in self.controller.listOfAP:
+                tempStr = AP.APtoString() + "\n\n"
+                self.detailsSAPText.insert(tk.END, tempStr)
+
+    def runSingleAttack(self):
+        #bash command for broadcast scan
+        bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " -c " + selectedMAC2 + " wlan1mon"
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+
+        
 
 
 
@@ -574,24 +695,44 @@ class BroadcastAttackPage(tk.Frame):
                        padx = controller.xPadding,
                        pady = 100)
 
+        #display area
+        self.detailsBAPText = tk.Text(self, height = 20, background = "blue")
+        self.detailsBAPText.grid(row = 0, column = 0, sticky = 'nsew')
+        self.detailsBAPText.tag_config("here", background="blue", foreground = "green")
+        self.detailsBAPText.insert(1.0, "Run broadcast DoS attack\nREFRESH TO UPDATE LIST")
 
+        #refresh button
+        refreshBAPButton = ttk.Button(self,
+                                      text = "Refresh",
+                                      style = 'TButton',
+                                      command = lambda: self.refreshBA())
+        refreshBAPButton.grid(row = 1, column = 0, sticky = 'nsew')
 
+        #return button
+        returnBAPButton = ttk.Button(self,
+                                     text = "Return",
+                                     style = 'TButton',
+                                     command = lambda: controller.show_frame("SelectionPage"))
+        returnBAPButton.grid(row = 2, column = 0, sticky='nsew')
 
+    def refreshBA(self):
+        if len(self.controller.listOfCC) < 1:
+            self.detailsBAPText.delete(1.0, tk.END)
+            self.detailsBAPText.insert(1.0, "NO COMMUNICATIONS FOUND\nPlease perform a network scan")
+        else:
+            #record a number of client communications
+            numberOfCC = len(self.controller.listOfCC)
+            #display communications
+            self.detailsBAPText.delete(1.0, tk.END)
+            for CC in self.controller.listOfCC:
+                tempStr = CC.CCtoString() + "\n\n"
+                self.detailsBAPText.insert(tk.END, tempStr)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        def runBroadcastAttack(self):
+            #bash command for broadcast scan
+            bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " wlan1mon"
+            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
 
 
 
