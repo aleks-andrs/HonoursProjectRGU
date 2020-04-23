@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
-import subprocess
 import tkinter as tk
 from tkinter import font  as tkfont
 from tkinter import ttk
-
+import os
+import sys
+import subprocess
 import pexpect
 import _thread
-import sys
 import time
 
 class AccessPoint:
@@ -44,6 +44,29 @@ class ClientComs:
     def CCtoString(self):
         print("Station MAC:" + self.MAC + "; packets:" + self.packets)
 
+class CurrentConfiguration:
+    #current device configuration
+    def __init__(self, interfacesList):
+        self.interfacesNIC = interfacesList
+        #default values
+        self.NIC = "wlan0"
+        self.NICmon = "wlan0mon"
+
+    def setNIC(self, value):
+        self.NIC = value
+        
+    def setNICmon(self, value):
+        self.NICmon = value
+        
+    def getNIC(self):
+        return self.NIC
+    
+    def getNICmon(self):
+        return self.NICmon
+
+    def getInterfaces(self):
+        return self.interfacesNIC
+
 class DroneHackApp(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -72,8 +95,8 @@ class DroneHackApp(tk.Tk):
         self.x0 = self.winfo_screenwidth()/2 
         self.y0 = self.winfo_screenheight()/2
         self.geometry("+100+100")
-        print(self.x0) #test output
-        print(self.y0)
+        #print(self.x0) #test output
+        #print(self.y0)
 
         self.screenType = ""
         #assign screen type (small/large)
@@ -85,16 +108,23 @@ class DroneHackApp(tk.Tk):
         #center the screen
         self.xPadding = self.x0 - 410
 
+        #application default settings
+        self.interfaces = []
+        self.updateInterfaces()
+
         #store frames in container
         container = tk.Frame(self)
         container.pack(side = "top", fill = "both", expand=True)
         container.grid_rowconfigure(0, weight = 1)
         container.grid_columnconfigure(0, weight = 1)
         self.frames = {}
-        self.pages = {MainPage, StartPage, AboutPage, SettingsPage}
-        for F in self.pages:
-            page_name = F.__name__
-            frame = F(parent=container, controller=self)
+        self.pages = {MainPage, StartPage,
+                      AboutPage, SettingsPage,
+                      SelectionPage, ScanNetworkPage,
+                      SingleAttackPage, BroadcastAttackPage}
+        for P in self.pages:
+            page_name = P.__name__
+            frame = P(parent=container, controller=self)
             self.frames[page_name] = frame
             frame.grid(row = 0, column = 0, sticky = 'nsew')
 
@@ -102,11 +132,7 @@ class DroneHackApp(tk.Tk):
         self.bind('<Escape>', self.exit_full_screen)
         self.bind('<F11>', self.enter_full_screen)
         self.bind('<Control-q>', self.shut_down)
-
-        #application default values
-        self.wirelessCard = "wlan1"
-        self.monitorModeWirelessCard = "wlan1mon"
-
+        
         #display Main page
         self.show_frame("MainPage")
 
@@ -114,13 +140,13 @@ class DroneHackApp(tk.Tk):
             frame = self.frames[page_name]
             frame.tkraise()
             #keyboard button handlers for each frame
-            if (page_name.__eq__("MainPage")):
+            if page_name.__eq__("MainPage"):
                 self.bind('2', (lambda event: self.show_frame("SettingsPage")))
                 self.bind('3', (lambda event: self.show_frame("AboutPage")))
-                self.bind('4', self.shut_down)
-            elif (page_name.__eq__("AboutPage")):
+                self.bind('9', self.shut_down)
+            elif page_name.__eq__("AboutPage"):
                 self.unbind('3')
-            elif (page_name.__eq__("SettingsPage")):
+            elif page_name.__eq__("SettingsPage"):
                 self.unbind('3')
 
 
@@ -160,10 +186,26 @@ class DroneHackApp(tk.Tk):
         entryList = list(readerObj)
         connectionsList = [i for i in entryList if i != []]
         return connectionsList
-            
+
+    def getAllInterfaces(self):
+        return os.listdir('/sys/class/net/')
+
+    def updateInterfaces(self):
+        self.shortenedInterfaces = []
+        self.interfaces = self.getAllInterfaces()
+        for interface in self.interfaces:
+            if interface.startswith("lo"):
+                #do nothing
+                True
+            elif interface.startswith("eth"):
+                #do nothing
+                True
+            else:
+                self.shortenedInterfaces.append(interface)
+        self.configurationSettings = CurrentConfiguration(self.shortenedInterfaces)
+        
     def shut_down(self, *args):
         self.destroy()
-
 
 
 
@@ -305,7 +347,7 @@ class MainPage(tk.Frame):
         settingsMPButton.grid(row = 3, column = 10, sticky='w')
 
         shutDownMPButton = ttk.Button(optionsMPFrame,
-                                   text = "[ 4 ] Shut down ",
+                                   text = "[ 9 ] Shut down ",
                                    style = 'TButton',
                                    command = controller.shut_down)
         shutDownMPButton.grid(row = 4, column = 10, sticky='w')
@@ -402,6 +444,160 @@ class StartPage(tk.Frame):
                        padx = controller.xPadding,
                        pady = 100)
 
+        #get network interfaces
+        bashCommand = "ifconfig"
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+
+        #text label
+        textStPLabel = tk.Label(self,
+                                text = "Select a network card to use in monitor mode:",
+                                background = '#000000',
+                                foreground = '#ffffff',
+                                font=controller.text_font)
+        textStPLabel.grid(row = 0, column = 0, sticky = 'nsew')
+
+        #display network interfaces
+        self.outputStPText = tk.Text(self, height=12, background="blue")
+        self.outputStPText.grid(row = 1, column = 0, sticky = 'nsew')
+        self.outputStPText.tag_config("here", background="blue", foreground="green")
+        self.outputStPText.insert(1.0, output)
+
+        #choose network interfaces
+        NICs = controller.configurationSettings.getInterfaces()
+        NICcounter = 0;
+
+        #NICs buttons
+        for n in NICs:
+            interfaceName = str(NICs[NICcounter])
+            ttk.Button(self,
+                       text=interfaceName,
+                       style = 'TButton',
+                       command = lambda idx = interfaceName: self.start_monitor_mode(idx)).grid(row = NICcounter+2, column = 0, sticky = 'nsew')
+            NICcounter = NICcounter + 1
+
+        #back to main menu button
+        backStPButton = ttk.Button(self,
+                                  text = "Back to main page",
+                                  style = 'TButton',
+                                  command = lambda: controller.show_frame("MainPage"))
+        backStPButton.grid(row = NICcounter+2, column = 0, sticky = 'nsew')
+        
+    def start_monitor_mode(self, selectedInterface):
+        self.outputStPText.delete(1.0, tk.END)
+        self.outputStPText.insert(1.0, "Starting monitor mode...")
+
+        #bash command for network process kill (at most 5 processes)
+        checkKillCommand = "airmon-ng check kill"
+        i = 0
+        while i<5:
+            process = subprocess.Popen(checkKillCommand.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+            if len(output)<4:
+                break
+            i += 1
+
+        #bash command for monitor mode
+        startMonitorModeCommand = "airmon-ng start" 
+        startMonitorModeCommand = startMonitorModeCommand + " " + selectedInterface
+
+        #start monitor mode on specified NIC
+        process = subprocess.Popen(startMonitorModeCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        
+        if selectedInterface.endswith("mon"):
+            self.controller.configurationSettings.setNICmon(selectedInterface)
+        else:
+            self.controller.configurationSettings.setNIC(selectedInterface)
+            self.controller.configurationSettings.setNICmon(selectedInterface+"mon")
+            
+        self.controller.show_frame("SelectionPage")
+
+class SelectionPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.configure(background = '#000000',
+                       padx = controller.xPadding,
+                       pady = 100)
+
+        scanSePButton = ttk.Button(self,
+                                   text = "Scan network",
+                                   style = 'TButton',
+                                   command = lambda: controller.show_frame("ScanNetworkPage"))
+        scanSePButton.grid(row = 1, column = 0, sticky='nsew')
+
+        SingleAttackSePButton = ttk.Button(self,
+                                           text = "Run single attack",
+                                           style = 'TButton',
+                                           command = lambda: controller.show_frame("SingleAttackPage"))
+        SingleAttackSePButton.grid(row = 2, column = 0, sticky='nsew')
+
+        BroadcastSePButton = ttk.Button(self,
+                                        text = "Run broadcast attack",
+                                        style = 'TButton',
+                                        command = lambda: controller.show_frame("BroadcastAttackPage"))
+        BroadcastSePButton.grid(row = 3, column = 0, sticky='nsew')
+
+        mainPageSePButton = ttk.Button(self,
+                                       text = "Main page",
+                                       style = 'TButton',
+                                       command = lambda: controller.show_frame("MainPage"))
+        mainPageSePButton.grid(row = 4, column = 0, sticky='nsew')
+
+
+
+class ScanNetworkPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.configure(background = '#000000',
+                       padx = controller.xPadding,
+                       pady = 100)
+
+
+class SingleAttackPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.configure(background = '#000000',
+                       padx = controller.xPadding,
+                       pady = 100)
+
+
+
+class BroadcastAttackPage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.configure(background = '#000000',
+                       padx = controller.xPadding,
+                       pady = 100)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        #threads and stuff for later use
+        '''
         self.outputStPText = tk.Text(self, height=12, width=100, background="blue")
         self.outputStPText.grid(row = 0, column = 0, sticky = 'nsew')
         
@@ -437,19 +633,20 @@ class StartPage(tk.Frame):
 
     def scan_networks(self):
         #bash command for network scan
-        '''
+        
         bashCommand = "timeout 3 airodump-ng wlan1"
         process = subprocess.check_output(["timeout", "3", "airodump-ng", "wlan1"]) #Popen(bashCommand.split(), stdout=subprocess.PIPE)
         #output, error = process.communicate()
         x=0
         #print(error)
         #print(output)
-        self.outputStPText.insert(tk.END, process)'''
+        self.outputStPText.insert(tk.END, process)
         print("Starting up Airodump-ng")
         cmd_airodump = pexpect.spawn('airodump-ng wlan1 --output-format csv -w data')
         cmd_airodump.expect([pexpect.TIMEOUT, pexpect.EOF], 5)
         print("Airodump-ng Stopping...")
         cmd_airodump.close()
+        '''
 	
 if __name__ == "__main__":
     app = DroneHackApp()
