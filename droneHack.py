@@ -93,26 +93,24 @@ class DroneHackApp(tk.Tk):
                              relief='flat')
         self.style.map("TButton",
                        background=[('active', '#191919')])
+        self.configure(background = '#000000')
 
         #display app fullscreen
         self.attributes("-fullscreen", True)
 
         #calculate screen size
-        self.x0 = self.winfo_screenwidth()/2 
-        self.y0 = self.winfo_screenheight()/2
-        self.geometry("+100+100")
-        #print(self.x0) #test output
-        #print(self.y0)
+        self.xScreenRes = self.winfo_screenwidth() 
+        self.yScreenRes = self.winfo_screenheight()
+        self.geometry('+100+100')
+        #print(self.xScreenRes) #test output
+        #print(self.yScreenRes)
 
-        self.screenType = ""
-        #assign screen type (small/large)
-        if (self.x0 < 410):
-            self.screenType = "small"
+        self.deviceType = ""
+        #assign device screen type (small/large)
+        if self.xScreenRes < 800 or self.yScreenRes < 500:
+            self.deviceType = "small"
         else:
-            self.screenType = "large"
-            
-        #center the screen
-        self.xPadding = self.x0 - 410
+            self.deviceType = "large"
 
         #application default settings
         self.interfaces = []
@@ -121,10 +119,11 @@ class DroneHackApp(tk.Tk):
         self.listOfCC = []
 
         #store frames in container
-        container = tk.Frame(self)
-        container.pack(side = "top", fill = "both", expand=True)
-        container.grid_rowconfigure(0, weight = 1)
-        container.grid_columnconfigure(0, weight = 1)
+        container = tk.Frame(self, background = '#000000')
+        container.grid(row=1, column=1)
+        self.grid_rowconfigure(1, weight = 1)
+        self.grid_columnconfigure(1, weight = 1)
+        
         self.frames = {}
         self.pages = {MainPage, StartPage,
                       AboutPage, SettingsPage,
@@ -133,8 +132,11 @@ class DroneHackApp(tk.Tk):
         for P in self.pages:
             page_name = P.__name__
             frame = P(parent=container, controller=self)
-            self.frames[page_name] = frame
             frame.grid(row = 0, column = 0, sticky = 'nsew')
+            frame.configure(background = '#990000')
+            frame.grid_rowconfigure(0, weight = 1)
+            frame.grid_columnconfigure(0, weight = 1)
+            self.frames[page_name] = frame
 
         #keybord bindings
         self.bind('<Escape>', self.exit_full_screen)
@@ -160,22 +162,13 @@ class DroneHackApp(tk.Tk):
 
     def exit_full_screen(self, *args):
         if(self.attributes("-fullscreen")):
-            for P in self.pages:
-                frame = self.frames[P.__name__]
-                frame.configure(background = '#000000',
-                            padx = 10,
-                            pady = 10)
             self.attributes("-fullscreen", False)
 
 
     def enter_full_screen(self, *args):
         if(not self.attributes("-fullscreen")):
             self.attributes("-fullscreen", True)
-            for P in self.pages:
-                frame = self.frames[P.__name__]
-                frame.configure(background = '#000000',
-                            padx = self.xPadding,
-                            pady = 100)
+            
 
     def readCSV(self, filename):
         #csv file reader
@@ -225,29 +218,37 @@ class MainPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background = '#000000',
-                       padx = controller.xPadding,
-                       pady = 100)
 
         #scrollable canvas
-        holdMPCanvas = tk.Canvas(self, background = '#000000', scrollregion=(0, 0, 1000, 1000))
-        holdMPCanvas.grid(row = 0, column = 0, sticky='nsew')
-
-        hbar = tk.Scrollbar(holdMPCanvas,orient = tk.VERTICAL, background = '#009900')
-        hbar.grid(row = 0, column = 1, rowspan = 1, sticky='ns')
-        hbar.config(command=holdMPCanvas.yview)
-        holdMPCanvas.config(yscrollcommand=hbar.set)
-
-
+        areaMPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
+        areaMPCanvas.grid(row = 0, column = 0, sticky='nsew')
         
+        #initialize vertical scrollbar
+        vBar = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+        vBar.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+        vBar.config(command=areaMPCanvas.yview)
+        areaMPCanvas.configure(yscrollcommand=vBar.set)
+
+        #add horizonal bar for smaller devices
+        if controller.deviceType == "large":
+            hBar = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBar.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBar.config(command=areaMPCanvas.xview)
+            areaMPCanvas.configure(xscrollcommand=hBar.set)
+        
+
+        #scrollable main page frame
+        mainMPFrame = tk.Frame(areaMPCanvas, background = '#000000')
+        areaMPCanvas.create_window((0, 0), window=mainMPFrame, anchor='nw')
+
         #internal frames
-        logoMPFrame = tk.Frame(holdMPCanvas, background = '#000000')
-        optionsMPFrame = tk.Frame(holdMPCanvas, background = '#000000')
+        logoMPFrame = tk.Frame(mainMPFrame, background = '#000000')
+        optionsMPFrame = tk.Frame(mainMPFrame, background = '#000000')
         logoMPFrame.grid(row = 0, column = 0, sticky='nsew')
         optionsMPFrame.grid(row = 1, column = 0, sticky='nsew')
 
         # display frame containing logo for large screen devices
-        if(controller.screenType == "large"):
+        if(controller.deviceType == "large"):
             logoEmptyLineMPLabel = tk.Label(optionsMPFrame,
                              text = " ",
                              background = '#000000',
@@ -369,16 +370,17 @@ class MainPage(tk.Frame):
         for row in range(row_count):
             optionsMPFrame.grid_rowconfigure(row, minsize = 50)
 
-        holdMPCanvas.configure(scrollregion=holdMPCanvas.bbox(tk.ALL))
+        #update widgets
+        mainMPFrame.update_idletasks()
+        
+        #configure scrollable area
+        areaMPCanvas.configure(scrollregion=areaMPCanvas.bbox(tk.ALL))
         
 
 class AboutPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background = '#000000',
-                       padx = controller.xPadding,
-                       pady = 100)
 
         #internal frames for text and buttons
         textAPFrame = tk.Frame(self, background = '#000000')
@@ -402,14 +404,6 @@ class AboutPage(tk.Frame):
         label.grid(row = 0, column = 0, sticky = 'w')
         emptyLineAPLabel.grid(row = 0, column = 20, sticky='nsew')
         exitAPButton.grid(row = 1, column = 10, sticky = 'w')
-
-##        col_count, row_count = textAPFrame.grid_size()
-##        for col in range(col_count):
-##            textAPFrame.grid_columnconfigure(col, minsize = 30)
-##
-##        for row in range(row_count):
-##            textAPFrame.grid_rowconfigure(row, minsize = 50)
-            
         textAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
 
 
@@ -418,9 +412,7 @@ class SettingsPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background = '#000000',
-                       padx = controller.xPadding,
-                       pady = 100)
+
 
         #internal frames
         displaySPFrame = tk.Frame(self, background = '#000000')
@@ -432,7 +424,7 @@ class SettingsPage(tk.Frame):
         output, error = process.communicate()
         
         #display area
-        infoSPText = tk.Text(displaySPFrame, height=12, width=100, background="blue")
+        infoSPText = tk.Text(displaySPFrame, height=12, width=105, background="blue")
         infoSPText.grid(row = 0, column = 0, columnspan = 10, sticky = 'nsew')
         infoSPText.tag_config("here", background="blue", foreground="green")
         infoSPText.insert(1.0, output)
@@ -448,9 +440,6 @@ class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background = '#000000',
-                       padx = controller.xPadding,
-                       pady = 100)
 
         #get network interfaces
         bashCommand = "ifconfig"
@@ -525,9 +514,6 @@ class SelectionPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background = '#000000',
-                       padx = controller.xPadding,
-                       pady = 100)
 
         scanSePButton = ttk.Button(self,
                                    text = "Scan network",
@@ -559,9 +545,6 @@ class ScanNetworkPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background = '#000000',
-                       padx = controller.xPadding,
-                       pady = 100)
 
         self.scanResults = []
 
@@ -640,9 +623,6 @@ class SingleAttackPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background = '#000000',
-                       padx = controller.xPadding,
-                       pady = 100)
 
         #display area
         self.detailsSAPText = tk.Text(self, height = 20, background = "blue")
@@ -691,9 +671,6 @@ class BroadcastAttackPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background = '#000000',
-                       padx = controller.xPadding,
-                       pady = 100)
 
         #display area
         self.detailsBAPText = tk.Text(self, height = 20, background = "blue")
