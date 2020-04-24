@@ -112,6 +112,14 @@ class DroneHackApp(tk.Tk):
         else:
             self.deviceType = "large"
 
+        #set screen view dimensions
+        if self.deviceType == "large":
+            self.screenViewX = 830
+            self.screenViewY = 560
+        else:
+            self.screenViewX = self.xScreenRes
+            self.screenViewY = self.yScreenRes
+
         #application default settings
         self.interfaces = []
         self.updateInterfaces()
@@ -133,9 +141,10 @@ class DroneHackApp(tk.Tk):
             page_name = P.__name__
             frame = P(parent=container, controller=self)
             frame.grid(row = 0, column = 0, sticky = 'nsew')
-            frame.configure(background = '#990000')
+            frame.configure(background = '#990000', width = self.screenViewX, height = self.screenViewY)
             frame.grid_rowconfigure(0, weight = 1)
             frame.grid_columnconfigure(0, weight = 1)
+            frame.grid_propagate(False)
             self.frames[page_name] = frame
 
         #keybord bindings
@@ -230,7 +239,7 @@ class MainPage(tk.Frame):
         areaMPCanvas.configure(yscrollcommand=vBar.set)
 
         #add horizonal bar for smaller devices
-        if controller.deviceType == "large":
+        if controller.deviceType == "small":
             hBar = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
             hBar.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
             hBar.config(command=areaMPCanvas.xview)
@@ -240,7 +249,7 @@ class MainPage(tk.Frame):
         #scrollable main page frame
         mainMPFrame = tk.Frame(areaMPCanvas, background = '#000000')
         areaMPCanvas.create_window((0, 0), window=mainMPFrame, anchor='nw')
-
+        
         #internal frames
         logoMPFrame = tk.Frame(mainMPFrame, background = '#000000')
         optionsMPFrame = tk.Frame(mainMPFrame, background = '#000000')
