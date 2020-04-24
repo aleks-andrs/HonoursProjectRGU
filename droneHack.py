@@ -90,7 +90,7 @@ class DroneHackApp(tk.Tk):
                                      'bold'),
                              background = '#000000',
                              foreground = '#00ff41',
-                             relief='flat')
+                             relief = 'flat')
         self.style.map("TButton",
                        background=[('active', '#191919')])
         self.configure(background = '#000000')
@@ -113,6 +113,8 @@ class DroneHackApp(tk.Tk):
             self.deviceType = "large"
 
         #set screen view dimensions
+        self.screenViewX = 100 #default values
+        self.screenViewY = 100
         if self.deviceType == "large":
             self.screenViewX = 830
             self.screenViewY = 560
@@ -230,40 +232,40 @@ class MainPage(tk.Frame):
 
         #scrollable canvas
         areaMPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
-        areaMPCanvas.grid(row = 0, column = 0, sticky='nsew')
+        areaMPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
         
         #initialize vertical scrollbar
-        vBar = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
-        vBar.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
-        vBar.config(command=areaMPCanvas.yview)
-        areaMPCanvas.configure(yscrollcommand=vBar.set)
+        vBarMP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+        vBarMP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+        vBarMP.config(command=areaMPCanvas.yview)
+        areaMPCanvas.configure(yscrollcommand=vBarMP.set)
 
         #add horizonal bar for smaller devices
         if controller.deviceType == "small":
-            hBar = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
-            hBar.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
-            hBar.config(command=areaMPCanvas.xview)
-            areaMPCanvas.configure(xscrollcommand=hBar.set)
+            hBarMP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarMP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBarMP.config(command=areaMPCanvas.xview)
+            areaMPCanvas.configure(xscrollcommand=hBarMP.set)
         
 
         #scrollable main page frame
         mainMPFrame = tk.Frame(areaMPCanvas, background = '#000000')
-        areaMPCanvas.create_window((0, 0), window=mainMPFrame, anchor='nw')
+        areaMPCanvas.create_window((0, 0), window=mainMPFrame, anchor = 'nw')
         
         #internal frames
         logoMPFrame = tk.Frame(mainMPFrame, background = '#000000')
         optionsMPFrame = tk.Frame(mainMPFrame, background = '#000000')
-        logoMPFrame.grid(row = 0, column = 0, sticky='nsew')
-        optionsMPFrame.grid(row = 1, column = 0, sticky='nsew')
+        logoMPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        optionsMPFrame.grid(row = 1, column = 0, sticky = 'nsew')
 
-        # display frame containing logo for large screen devices
+        #display frame containing logo for large screen devices
         if(controller.deviceType == "large"):
             logoEmptyLineMPLabel = tk.Label(optionsMPFrame,
                              text = " ",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoEmptyLineMPLabel.grid(row = 0, column = 20, sticky='nsew')
+            logoEmptyLineMPLabel.grid(row = 0, column = 20, sticky = 'nsew')
          
             
             logo1 = tk.Label(logoMPFrame,
@@ -271,63 +273,63 @@ class MainPage(tk.Frame):
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logo1.grid(row = 1, column = 0, columnspan = 20, sticky='nsew')
+            logo1.grid(row = 1, column = 0, columnspan = 20, sticky = 'nsew')
 
             logo2 = tk.Label(logoMPFrame,
                              text = "#",
                              background = '#000000',
                              foreground = '#0000ff',
                              font=controller.text_font)
-            logo2.grid(row = 2, column = 19, sticky='nsew')
+            logo2.grid(row = 2, column = 19, sticky = 'nsew')
 
             logo3 = tk.Label(logoMPFrame,
                              text = "#",
                              background = '#000000',
                              foreground = '#0000ff',
                              font=controller.text_font)
-            logo3.grid(row = 3, column = 0, sticky='nsew')
+            logo3.grid(row = 3, column = 0, sticky = 'nsew')
 
             logo4 = tk.Label(logoMPFrame,
                              text = "#",
                              background = '#000000',
                              foreground = '#0000ff',
                              font=controller.text_font)
-            logo4.grid(row = 4, column = 1, sticky='nsew')
+            logo4.grid(row = 4, column = 1, sticky = 'nsew')
 
             logo5 = tk.Label(logoMPFrame,
                              text = "L",
                              background = '#000000',
                              foreground = '#0000ff',
                              font=controller.text_font)
-            logo5.grid(row = 5, column = 2, sticky='nsew')
+            logo5.grid(row = 5, column = 2, sticky = 'nsew')
             
             logo6 = tk.Label(logoMPFrame,
                              text = "#",
                              background = '#000000',
                              foreground = '#0000ff',
                              font=controller.text_font)
-            logo6.grid(row = 6, column = 3, sticky='nsew')
+            logo6.grid(row = 6, column = 3, sticky = 'nsew')
             
             logo7 = tk.Label(logoMPFrame,
                              text = "#",
                              background = '#000000',
                              foreground = '#0000ff',
                              font=controller.text_font)
-            logo7.grid(row = 7, column = 4, sticky='nsew')
+            logo7.grid(row = 7, column = 4, sticky = 'nsew')
             
             logo8 = tk.Label(logoMPFrame,
                              text = "#",
                              background = '#000000',
                              foreground = '#0000ff',
                              font=controller.text_font)
-            logo8.grid(row = 8, column = 5, sticky='nsew')
+            logo8.grid(row = 8, column = 5, sticky = 'nsew')
             
             logo100 = tk.Label(logoMPFrame,
                              text = "==============================================================",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logo100.grid(row = 9, column = 0, columnspan = 20, sticky='nsew')
+            logo100.grid(row = 9, column = 0, columnspan = 20, sticky = 'nsew')
 
             #logo frame dimensions set up
             col_count, row_count = logoMPFrame.grid_size()
@@ -350,25 +352,25 @@ class MainPage(tk.Frame):
                                    text = "[ 1 ] Start     ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("StartPage"))
-        startMPButton.grid(row=1, column = 10, sticky='w')
+        startMPButton.grid(row=1, column = 10, sticky = 'w')
 
         aboutMPButton = ttk.Button(optionsMPFrame,
                                    text = "[ 2 ] Settings  ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("SettingsPage"))
-        aboutMPButton.grid(row = 2, column = 10, sticky='w')
+        aboutMPButton.grid(row = 2, column = 10, sticky = 'w')
 
         settingsMPButton = ttk.Button(optionsMPFrame,
                                    text = "[ 3 ] About     ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("AboutPage"))
-        settingsMPButton.grid(row = 3, column = 10, sticky='w')
+        settingsMPButton.grid(row = 3, column = 10, sticky = 'w')
 
         shutDownMPButton = ttk.Button(optionsMPFrame,
                                    text = "[ 9 ] Shut down ",
                                    style = 'TButton',
                                    command = controller.shut_down)
-        shutDownMPButton.grid(row = 4, column = 10, sticky='w')
+        shutDownMPButton.grid(row = 4, column = 10, sticky = 'w')
         
         
         #options frame dimensions
@@ -391,29 +393,44 @@ class AboutPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        #internal frames for text and buttons
-        textAPFrame = tk.Frame(self, background = '#000000')
+        #scrollable canvas
+        areaAPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
+        areaAPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        #initialize vertical scrollbar
+        vBarAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+        vBarAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+        vBarAP.config(command=areaAPCanvas.yview)
+        areaAPCanvas.configure(yscrollcommand=vBarAP.set)
 
-        label = tk.Label(self,
+        #add horizonal bar for smaller devices
+        if controller.deviceType == "small":
+            hBarAP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarAP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBarAP.config(command=areaAPCanvas.xview)
+            areaAPCanvas.configure(xscrollcommand=hBarAP.set)
+
+        #internal scrollable about page frame
+        textAPFrame = tk.Frame(areaAPCanvas, background = '#000000')
+        areaAPCanvas.create_window((0, 0), window=textAPFrame, anchor = 'nw')
+
+        labelAbout = tk.Label(textAPFrame,
                          text = "This is the info page \n Bla Bla",
                          background = '#000000',
                          foreground = '#ffffff',
                          font=controller.text_font)
-        emptyLineAPLabel = tk.Label(textAPFrame,
-                                           text = " ",
-                                           background = '#000000',
-                                           foreground = '#00ff41',
-                                           font=controller.text_font)
     
         exitAPButton = ttk.Button(textAPFrame,
-                                    text = "Back to main page",
+                                    text = "Back to Main Page",
                                     style = 'TButton',
                                     command = lambda: controller.show_frame("MainPage"))
 
-        label.grid(row = 0, column = 0, sticky = 'w')
-        emptyLineAPLabel.grid(row = 0, column = 20, sticky='nsew')
-        exitAPButton.grid(row = 1, column = 10, sticky = 'w')
-        textAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+        labelAbout.grid(row = 0, column = 0, padx = (10, 10))
+        exitAPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 10), pady = (30, 30))
+        
+        #dynamically update widgets
+        textAPFrame.update_idletasks()
+        
 
 
 
@@ -422,10 +439,26 @@ class SettingsPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        #scrollable canvas
+        areaSPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
+        areaSPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        #initialize vertical scrollbar
+        vBarSP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+        vBarSP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+        vBarSP.config(command=areaSPCanvas.yview)
+        areaSPCanvas.configure(yscrollcommand=vBarSP.set)
 
-        #internal frames
-        displaySPFrame = tk.Frame(self, background = '#000000')
-        displaySPFrame.grid(row = 0, column = 0, sticky='nsew')
+        #add horizonal bar for smaller devices
+        if controller.deviceType == "small":
+            hBarSP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarSP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBarSP.config(command=areaSPCanvas.xview)
+            areaSPCanvas.configure(xscrollcommand=hBarSP.set)
+
+        #internal scrollable settings page frame
+        displaySPFrame = tk.Frame(areaSPCanvas, background = '#000000')
+        areaSPCanvas.create_window((0, 0), window=displaySPFrame, anchor = 'nw')
         
         #bash command
         bashCommand = "ifconfig"
@@ -433,17 +466,20 @@ class SettingsPage(tk.Frame):
         output, error = process.communicate()
         
         #display area
-        infoSPText = tk.Text(displaySPFrame, height=12, width=105, background="blue")
+        infoSPText = tk.Text(displaySPFrame, height=12, width=100, background="blue")
         infoSPText.grid(row = 0, column = 0, columnspan = 10, sticky = 'nsew')
         infoSPText.tag_config("here", background="blue", foreground="green")
         infoSPText.insert(1.0, output)
         
         #exit button
         exitSPButton = ttk.Button(displaySPFrame,
-                                  text = "Back to main page",
+                                  text = "Back to Main Page",
                                   style = 'TButton',
                                   command = lambda: controller.show_frame("MainPage"))
-        exitSPButton.grid(row = 1, column = 0, sticky = 'nsew')
+        exitSPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 10), pady = (30, 30))
+
+        #dynamically update widgets
+        displaySPFrame.update_idletasks()
         
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -484,7 +520,7 @@ class StartPage(tk.Frame):
 
         #back to main menu button
         backStPButton = ttk.Button(self,
-                                  text = "Back to main page",
+                                  text = "Back to Main Page",
                                   style = 'TButton',
                                   command = lambda: controller.show_frame("MainPage"))
         backStPButton.grid(row = NICcounter+2, column = 0, sticky = 'nsew')
@@ -528,25 +564,25 @@ class SelectionPage(tk.Frame):
                                    text = "Scan network",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("ScanNetworkPage"))
-        scanSePButton.grid(row = 1, column = 0, sticky='nsew')
+        scanSePButton.grid(row = 1, column = 0, sticky = 'nsew')
 
         singleAttackSePButton = ttk.Button(self,
                                            text = "Run single attack",
                                            style = 'TButton',
                                            command = lambda: controller.show_frame("SingleAttackPage"))
-        singleAttackSePButton.grid(row = 2, column = 0, sticky='nsew')
+        singleAttackSePButton.grid(row = 2, column = 0, sticky = 'nsew')
 
         broadcastSePButton = ttk.Button(self,
                                         text = "Run broadcast attack",
                                         style = 'TButton',
                                         command = lambda: controller.show_frame("BroadcastAttackPage"))
-        broadcastSePButton.grid(row = 3, column = 0, sticky='nsew')
+        broadcastSePButton.grid(row = 3, column = 0, sticky = 'nsew')
 
         mainPageSePButton = ttk.Button(self,
                                        text = "Main page",
                                        style = 'TButton',
                                        command = lambda: controller.show_frame("MainPage"))
-        mainPageSePButton.grid(row = 4, column = 0, sticky='nsew')
+        mainPageSePButton.grid(row = 4, column = 0, sticky = 'nsew')
 
 
 
@@ -577,7 +613,7 @@ class ScanNetworkPage(tk.Frame):
                                      text = "Return",
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
-        returnSNPButton.grid(row = 2, column = 0, sticky='nsew')
+        returnSNPButton.grid(row = 2, column = 0, sticky = 'nsew')
         
 
     def scanNetworks(self, seconds):
@@ -651,7 +687,7 @@ class SingleAttackPage(tk.Frame):
                                      text = "Return",
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
-        returnSAPButton.grid(row = 2, column = 0, sticky='nsew')
+        returnSAPButton.grid(row = 2, column = 0, sticky = 'nsew')
 
     def refreshSA(self):
         if len(self.controller.listOfAP) < 1:
@@ -699,7 +735,7 @@ class BroadcastAttackPage(tk.Frame):
                                      text = "Return",
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
-        returnBAPButton.grid(row = 2, column = 0, sticky='nsew')
+        returnBAPButton.grid(row = 2, column = 0, sticky = 'nsew')
 
     def refreshBA(self):
         if len(self.controller.listOfCC) < 1:
