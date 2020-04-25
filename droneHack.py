@@ -26,14 +26,17 @@ class AccessPoint:
 
     def APtoString(self):
         if self.counterAP != "0":
-            return("MAC address: " + self.BSSID + "; channel:" + self.channel +
-                  "; power:" + self.power + "; ENC:" + self.privacyType + "; name:" +
+            return("MAC address: " + self.BSSID + "; Channel:" + self.channel +
+                  "; Power:" + self.power + "; ENCR:" + self.privacyType + "; Name:" +
                   self.ESSID)
         else:
             return(" ")
-        
-    def getAPcount(self):
-        return(self.counterAP)
+
+    def macAPtoString(self):
+        if self.counterAP != "0":
+            return(self.BSSID)
+        else:
+            return(" ")
     
 
 class ClientComs:
@@ -50,12 +53,16 @@ class ClientComs:
 
     def CCtoString(self):
         if self.counterCC != "0":
-            return("Station MAC:" + self.MAC + "; packets:" + self.packets)
+            return("Station MAC:" + self.MAC + "; Power:" +
+                   self.power + "; Packets:" + self.packets + "; Client:" + self.BSSID)
         else:
             return(" ")
 
-    def getAPcount(self):
-        return(self.counterCC)
+    def macCCtoString(self):
+        if self.counterCC != "0":
+            return(self.MAC)
+        else:
+            return(" ")
     
 
 class CurrentConfiguration:
@@ -153,7 +160,7 @@ class DroneHackApp(tk.Tk):
             page_name = P.__name__
             frame = P(parent=container, controller=self)
             frame.grid(row = 0, column = 0, sticky = 'nsew')
-            frame.configure(background = '#990000', width = self.screenViewX, height = self.screenViewY)
+            frame.configure(background = '#000000', width = self.screenViewX, height = self.screenViewY)
             frame.grid_rowconfigure(0, weight = 1)
             frame.grid_columnconfigure(0, weight = 1)
             frame.grid_propagate(False)
@@ -679,15 +686,15 @@ class ScanNetworkPage(tk.Frame):
         #scrollable canvas
         areaSNPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
         areaSNPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
-        
-        #initialize vertical scrollbar
-        vBarSNP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
-        vBarSNP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
-        vBarSNP.config(command = areaSNPCanvas.yview)
-        areaSNPCanvas.configure(yscrollcommand = vBarSNP.set)
 
-        #add horizonal bar for smaller devices
         if controller.deviceType == "small":
+            #initialize vertical scrollbar for smaller devices
+            vBarSNP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+            vBarSNP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+            vBarSNP.config(command = areaSNPCanvas.yview)
+            areaSNPCanvas.configure(yscrollcommand = vBarSNP.set)
+
+            #add horizonal bar
             hBarSnP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
             hBarSNP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
             hBarSNP.config(command = areaSNPCanvas.xview)
@@ -700,20 +707,40 @@ class ScanNetworkPage(tk.Frame):
         #internal frames to display networks and buttons
         displaySNPFrame = tk.Frame(mainSNPFrame, background = '#000000')
         displaySNPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        optionsSNPFrame = tk.Frame(mainSNPFrame, background = '#000000')
+        optionsSNPFrame.grid(row = 1, column = 0, sticky = 'nsew')
         buttonsSNPFrame = tk.Frame(mainSNPFrame, background = '#000000')
-        buttonsSNPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+        buttonsSNPFrame.grid(row = 2, column = 0, sticky = 'nsew')
 
         #display area
         self.netsSNPText = tk.Text(displaySNPFrame, height = 18, width = 98, background = "blue")
         self.netsSNPText.grid(row = 0, column = 0, sticky = 'nsew', padx = (10,1), pady = (10,30))
         self.netsSNPText.tag_config("here", background = "blue", foreground = "green")
-        self.netsSNPText.insert(1.0, "Scan networks")
+        self.netsSNPText.insert(1.0, "PRESS BUTTON TO PERFORM A SCAN")
 
+        #pane for options selection
+        textSNPLabel = tk.Label(optionsSNPFrame,
+                                text = "Select scan duration: ",
+                                background = '#000000',
+                                foreground = '#ffffff',
+                                font=controller.text_font)
+        textSNPLabel.grid(row = 0, column = 0, sticky = 'nsew', padx = (10, 10), pady = (10, 20))
+
+        #seconds selection combobox
+        self.secondsListSNPCombo = ttk.Combobox(optionsSNPFrame,
+                                                values = ["6 seconds",
+                                                          "12 seconds",
+                                                          "16 seconds"],
+                                                state="readonly",
+                                                font = controller.text_font)
+        self.secondsListSNPCombo.current(0)
+        self.secondsListSNPCombo.grid(row = 0, column = 1, sticky = 'nsew', padx = (10, 0), pady = (10, 20))
+        
         #scan button
         startScanSNPButton = ttk.Button(buttonsSNPFrame,
                                         text = "[ 1 ] Scan networks ",
                                         style = 'TButton',
-                                        command = lambda: self.scanNetworks(5))
+                                        command = lambda: self.scanNetworks())
         startScanSNPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         #return button
@@ -722,15 +749,6 @@ class ScanNetworkPage(tk.Frame):
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
         returnSNPButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
-
-        #seconds selection combobox
-        secondsListSNPCombo = ttk.Combobox(buttonsSNPFrame,
-                                values = ["5 seconds",
-                                          "12 seconds",
-                                          "16 seconds"])
-        secondsListSNPCombo.current(0)
-
-        secondsListSNPCombo.grid(row = 3, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
         
         #dynamically update widgets
         mainSNPFrame.update_idletasks()
@@ -739,12 +757,24 @@ class ScanNetworkPage(tk.Frame):
         areaSNPCanvas.configure(scrollregion=areaSNPCanvas.bbox(tk.ALL))
 
         
-    def scanNetworks(self, seconds):
+    def scanNetworks(self):
         #temporary array to store scan results
         scanResults = []
+
+        #get monitor mode NIC
+        selectedNIC = str(self.controller.configurationSettings.getNICmon())
+
+        #calculate seconds
+        seconds = 6
+        if self.secondsListSNPCombo.current() == 0:
+            seconds = 6
+        elif self.secondsListSNPCombo.current() == 1:
+            seconds = 12
+        elif self.secondsListSNPCombo.current() == 2:
+            seconds = 16
         
         #bash command for network scan
-        bashCommand = "timeout 7 airodump-ng -w netOutput --output-format csv wlan1mon"
+        bashCommand = "timeout " + str(seconds) + " airodump-ng -w netOutput --output-format csv " + selectedNIC
         process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
         output, error = process.communicate()
         
@@ -762,6 +792,8 @@ class ScanNetworkPage(tk.Frame):
             counterCC = 0
 
             #save results as objects
+            self.controller.listOfAP.clear()
+            self.controller.listOfCC.clear()
             for connection in scanResults:
                 #access points
                 if len(connection) == 15:
@@ -777,17 +809,20 @@ class ScanNetworkPage(tk.Frame):
 
             #display results
             self.netsSNPText.delete(1.0, tk.END)
+            self.netsSNPText.insert(tk.END, "LIST OF SCANNED ACCESS POINTS:")
+            tempStr = ""
             for AP in self.controller.listOfAP:
                 tempStr = AP.APtoString() + "\n\n"
                 self.netsSNPText.insert(tk.END, tempStr)
-            
+                
+            self.netsSNPText.insert(tk.END, "LIST OF SCANNED CONNECTIONS:")            
             for CC in self.controller.listOfCC:
                 tempStr = CC.CCtoString() + "\n\n"
                 self.netsSNPText.insert(tk.END, tempStr)
 
         except:
             self.netsSNPText.delete(1.0, tk.END)
-            self.netsSNPText.insert(1.0, "Unable to read CSV file, check your permissions")
+            self.netsSNPText.insert(1.0, "UNABLE TO READ CSV FILE, CHECK YOUR PERMISSIONS")
 
 
 class SingleAttackPage(tk.Frame):
@@ -798,15 +833,15 @@ class SingleAttackPage(tk.Frame):
         #scrollable canvas
         areaSAPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
         areaSAPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
-        
-        #initialize vertical scrollbar
-        vBarSAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
-        vBarSAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
-        vBarSAP.config(command = areaSAPCanvas.yview)
-        areaSAPCanvas.configure(yscrollcommand = vBarSAP.set)
 
-        #add horizonal bar for smaller devices
         if controller.deviceType == "small":
+            #initialize vertical scrollbar
+            vBarSAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+            vBarSAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+            vBarSAP.config(command = areaSAPCanvas.yview)
+            areaSAPCanvas.configure(yscrollcommand = vBarSAP.set)
+
+            #add horizonal bar
             hBarSAP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
             hBarSAP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
             hBarSAP.config(command = areaSAPCanvas.xview)
@@ -819,14 +854,44 @@ class SingleAttackPage(tk.Frame):
         #internal frames to display networks and buttons
         displaySAPFrame = tk.Frame(mainSAPFrame, background = '#000000')
         displaySAPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        optionsSAPFrame = tk.Frame(mainSAPFrame, background = '#000000')
+        optionsSAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
         buttonsSAPFrame = tk.Frame(mainSAPFrame, background = '#000000')
-        buttonsSAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+        buttonsSAPFrame.grid(row = 2, column = 0, sticky = 'nsew')
 
         #display area
         self.detailsSAPText = tk.Text(displaySAPFrame,height = 18, width = 98, background = "blue")
         self.detailsSAPText.grid(row = 0, column = 0, sticky = 'nsew', padx = (10,1), pady = (10,30))
         self.detailsSAPText.tag_config("here", background = "blue", foreground = "green")
-        self.detailsSAPText.insert(1.0, "Run single DoS attack\nREFRESH TO UPDATE LIST")
+        self.detailsSAPText.insert(1.0, "REFRESH TO UPDATE LIST")
+
+        #pane for options selection
+        textSAPLabel = tk.Label(optionsSAPFrame,
+                                text = "Run a DoS against: ",
+                                background = '#000000',
+                                foreground = '#ffffff',
+                                font=controller.text_font)
+        textSAPLabel.grid(row = 0, column = 0, sticky = 'nsew', padx = (10, 10), pady = (10, 20))
+
+        #connection selection combobox
+        self.selectedConSAPCombo = ttk.Combobox(optionsSAPFrame,
+                                                values = [],
+                                                state="disabled",
+                                                font = controller.text_font)
+        self.selectedConSAPCombo.grid(row = 0, column = 1, sticky = 'nsew', padx = (10, 10), pady = (10, 20))
+
+        #DoS packets selection combobox
+        self.selectedPacketsSAPCombo = ttk.Combobox(optionsSAPFrame,
+                                                    values = ["3 packets",
+                                                              "5 packets",
+                                                              "10 packets",
+                                                              "20 packets",
+                                                              "30 packets"],
+                                                    state = "readonly",
+                                                    width = 16,
+                                                    font = controller.text_font)
+        self.selectedPacketsSAPCombo.current(0)
+        self.selectedPacketsSAPCombo.grid(row = 0, column = 2, sticky = 'nsew', padx = (10, 10), pady = (10, 20))
 
         #refresh button
         refreshSAPButton = ttk.Button(buttonsSAPFrame,
@@ -835,12 +900,19 @@ class SingleAttackPage(tk.Frame):
                                       command = lambda: self.refreshSA())
         refreshSAPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
+        #single DoS attack button
+        singleRunSAPButton = ttk.Button(buttonsSAPFrame,
+                                        text = "[ 2 ] Run DoS Attack",
+                                        style = 'TButton',
+                                        command = lambda: self.runSingleAttack())
+        singleRunSAPButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+        
         #return button
         returnSAPButton = ttk.Button(buttonsSAPFrame,
-                                     text = "[ 2 ] Selection Page",
+                                     text = "[ 3 ] Selection Page",
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
-        returnSAPButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+        returnSAPButton.grid(row = 3, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         #dynamically update widgets
         mainSAPFrame.update_idletasks()
@@ -850,26 +922,38 @@ class SingleAttackPage(tk.Frame):
         
 
     def refreshSA(self):
-        if len(self.controller.listOfAP) < 1:
+        if len(self.controller.listOfCC) < 2:
             self.detailsSAPText.delete(1.0, tk.END)
-            self.detailsSAPText.insert(1.0, "NO ACCESS POINTS FOUND:\nPlease perform a network scan")
+            self.detailsSAPText.insert(1.0, "NO COMMUNICATIONS FOUND:\nPlease perform a network scan")
+            self.selectedConSAPCombo['state'] = "disabled"
         else:
-            #record a number of access points
-            numberOfAP = len(self.controller.listOfAP)
-            #display access points
+            #display communications
             self.detailsSAPText.delete(1.0, tk.END)
-            for AP in self.controller.listOfAP:
-                tempStr = AP.APtoString() + "\n\n"
+            self.detailsSAPText.insert(tk.END, "SELECT ONE OF THE FOLLOWING CONNECTIONS:")
+            for CC in self.controller.listOfCC:
+                tempStr = CC.CCtoString() + "\n\n"
                 self.detailsSAPText.insert(tk.END, tempStr)
 
+            #activate combobox
+            self.selectedConSAPCombo['state'] = "readonly"
+            
+            #display mac addresses in combobox
+            macAddressStr = ""
+            for CC in self.controller.listOfCC:
+                macAddressStr = CC.macCCtoString()
+                if macAddressStr not in self.selectedConSAPCombo['values']:
+                    self.selectedConSAPCombo['values'] = (*self.selectedConSAPCombo['values'], macAddressStr)
+            self.selectedConSAPCombo.current(0)
+
+
     def runSingleAttack(self):
+        if len(self.controller.listOfCC) > 1:
+            print("OK")
+            print(self.selectedConSAPCombo.current())
         #bash command for broadcast scan
-        bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " -c " + selectedMAC2 + " wlan1mon"
-        process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
-        output, error = process.communicate()
-
-        
-
+        #bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " -c " + selectedMAC2 + " wlan1mon"
+        #process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
+        #output, error = process.communicate()
 
 
 class BroadcastAttackPage(tk.Frame):
@@ -880,15 +964,15 @@ class BroadcastAttackPage(tk.Frame):
         #scrollable canvas
         areaBAPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
         areaBAPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
-        
-        #initialize vertical scrollbar
-        vBarBAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
-        vBarBAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
-        vBarBAP.config(command = areaBAPCanvas.yview)
-        areaBAPCanvas.configure(yscrollcommand = vBarBAP.set)
 
-        #add horizonal bar for smaller devices
         if controller.deviceType == "small":
+            #initialize vertical scrollbar
+            vBarBAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+            vBarBAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+            vBarBAP.config(command = areaBAPCanvas.yview)
+            areaBAPCanvas.configure(yscrollcommand = vBarBAP.set)
+
+            #add horizonal bar
             hBarBAP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
             hBarBAP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
             hBarBAP.config(command=areaBAPCanvas.xview)
@@ -901,14 +985,46 @@ class BroadcastAttackPage(tk.Frame):
         #internal frames to display networks and buttons
         displayBAPFrame = tk.Frame(mainBAPFrame, background = '#000000')
         displayBAPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        optionsBAPFrame = tk.Frame(mainBAPFrame, background = '#000000')
+        optionsBAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
         buttonsBAPFrame = tk.Frame(mainBAPFrame, background = '#000000')
-        buttonsBAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+        buttonsBAPFrame.grid(row = 2, column = 0, sticky = 'nsew')
 
         #display area
         self.detailsBAPText = tk.Text(displayBAPFrame, height = 18, width = 98, background = "blue")
         self.detailsBAPText.grid(row = 0, column = 0, sticky = 'nsew', padx = (10,1), pady = (10,30))
         self.detailsBAPText.tag_config("here", background = "blue", foreground = "green")
-        self.detailsBAPText.insert(1.0, "Run broadcast DoS attack\nREFRESH TO UPDATE LIST")
+        self.detailsBAPText.insert(1.0, "REFRESH TO UPDATE LIST")
+
+        #pane for options selection
+        textBAPLabel = tk.Label(optionsBAPFrame,
+                                text = "Run a DoS against: ",
+                                background = '#000000',
+                                foreground = '#ffffff',
+                                font=controller.text_font)
+        textBAPLabel.grid(row = 0, column = 0, sticky = 'nsew', padx = (10, 10), pady = (10, 20))
+
+        #connection selection combobox
+        self.selectedConBAPCombo = ttk.Combobox(optionsBAPFrame,
+                                                values = [" "],
+                                                state="disabled",
+                                                font = controller.text_font)
+        self.selectedConBAPCombo.current(0)
+        self.selectedConBAPCombo.grid(row = 0, column = 1, sticky = 'nsew', padx = (10, 10), pady = (10, 20))
+
+        #DoS packets selection combobox
+        self.selectedPacketsBAPCombo = ttk.Combobox(optionsBAPFrame,
+                                                    values = ["3 packets",
+                                                              "5 packets",
+                                                              "10 packets",
+                                                              "20 packets",
+                                                              "30 packets"],
+                                                    state="readonly",
+                                                    width = 16,
+                                                    font = controller.text_font)
+        self.selectedPacketsBAPCombo.current(0)
+        self.selectedPacketsBAPCombo.grid(row = 0, column = 2, sticky = 'nsew', padx = (10, 10), pady = (10, 20))
+
 
         #refresh button
         refreshBAPButton = ttk.Button(buttonsBAPFrame,
@@ -917,12 +1033,19 @@ class BroadcastAttackPage(tk.Frame):
                                       command = lambda: self.refreshBA())
         refreshBAPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
+        #broadcast DoS attack run button
+        returnBAPButton = ttk.Button(buttonsBAPFrame,
+                                     text = "[ 2 ] Run DoS Attack",
+                                     style = 'TButton',
+                                     command = lambda: self.runBroadcastAttack())
+        returnBAPButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+        
         #return button
         returnBAPButton = ttk.Button(buttonsBAPFrame,
-                                     text = "[ 2 ] Selection Page",
+                                     text = "[ 3 ] Selection Page",
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
-        returnBAPButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+        returnBAPButton.grid(row = 3, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         #dynamically update widgets
         mainBAPFrame.update_idletasks()
@@ -932,24 +1055,38 @@ class BroadcastAttackPage(tk.Frame):
         
 
     def refreshBA(self):
-        if len(self.controller.listOfCC) < 1:
+        if len(self.controller.listOfAP) < 1:
+            #remove text and disable combobox if no connections found
             self.detailsBAPText.delete(1.0, tk.END)
             self.detailsBAPText.insert(1.0, "NO COMMUNICATIONS FOUND:\nPlease perform a network scan")
+            self.selectedConBAPCombo['state'] = "disabled"
         else:
-            #record a number of client communications
-            numberOfCC = len(self.controller.listOfCC)
-            #display communications
+            #display access points
             self.detailsBAPText.delete(1.0, tk.END)
-            for CC in self.controller.listOfCC:
-                tempStr = CC.CCtoString() + "\n\n"
+            self.detailsBAPText.insert(tk.END, "SELECT ONE OF THE FOLLOWING CONNECTIONS:")
+            for AP in self.controller.listOfAP:
+                tempStr = AP.APtoString() + "\n\n"
                 self.detailsBAPText.insert(tk.END, tempStr)
 
+            #activate combobox
+            self.selectedConBAPCombo['state'] = "readonly"
+            
+            #display mac addresses in combobox
+            macAddressBAPStr = ""
+            for AP in self.controller.listOfAP:
+                macAddressBAPStr = AP.macAPtoString()
+                if macAddressBAPStr not in self.selectedConBAPCombo['values']:
+                    self.selectedConBAPCombo['values'] = (*self.selectedConBAPCombo['values'], macAddressBAPStr)
+            self.selectedConBAPCombo.current(0)
 
-        def runBroadcastAttack(self):
-            #bash command for broadcast scan
-            bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " wlan1mon"
-            process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
-            output, error = process.communicate()
+
+    def runBroadcastAttack(self):
+        if len(self.controller.listOfCC) > 2:
+            print("OK2")
+        #bash command for broadcast scan
+        #bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " wlan1mon"
+        #process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
+        #output, error = process.communicate()
 
 
 
