@@ -22,15 +22,19 @@ class AccessPoint:
             self.ESSID = " N/A "
         else:
             self.ESSID = connectionArray[13]
-        self.c = str(counter)        
+        self.counterAP = str(counter)        
 
     def APtoString(self):
-        if self.c != "0":
+        if self.counterAP != "0":
             return("MAC address: " + self.BSSID + "; channel:" + self.channel +
                   "; power:" + self.power + "; ENC:" + self.privacyType + "; name:" +
                   self.ESSID)
         else:
             return(" ")
+        
+    def getAPcount(self):
+        return(self.counterAP)
+    
 
 class ClientComs:
     #client communications object
@@ -42,13 +46,17 @@ class ClientComs:
             self.BSSID = " N/A "
         else:
             self.BSSID = connectionArray[5]
-        self.c = str(counter)
+        self.counterCC = str(counter)
 
     def CCtoString(self):
-        if self.c != "0":
+        if self.counterCC != "0":
             return("Station MAC:" + self.MAC + "; packets:" + self.packets)
         else:
             return(" ")
+
+    def getAPcount(self):
+        return(self.counterCC)
+    
 
 class CurrentConfiguration:
     #current device configuration
@@ -92,7 +100,7 @@ class DroneHackApp(tk.Tk):
                              foreground = '#00ff41',
                              relief = 'flat')
         self.style.map("TButton",
-                       background=[('active', '#191919')])
+                       background = [('active', '#191919')])
         self.configure(background = '#000000')
 
         #display app fullscreen
@@ -107,7 +115,7 @@ class DroneHackApp(tk.Tk):
 
         self.deviceType = ""
         #assign device screen type (small/large)
-        if self.xScreenRes < 800 or self.yScreenRes < 500:
+        if self.xScreenRes < 830 or self.yScreenRes < 560:
             self.deviceType = "small"
         else:
             self.deviceType = "large"
@@ -118,9 +126,11 @@ class DroneHackApp(tk.Tk):
         if self.deviceType == "large":
             self.screenViewX = 830
             self.screenViewY = 560
+            self.minsize(830, 560)
         else:
             self.screenViewX = self.xScreenRes
             self.screenViewY = self.yScreenRes
+            self.minsize(100, 100)
 
         #application default settings
         self.interfaces = []
@@ -164,7 +174,7 @@ class DroneHackApp(tk.Tk):
             if page_name.__eq__("MainPage"):
                 self.bind('2', (lambda event: self.show_frame("SettingsPage")))
                 self.bind('3', (lambda event: self.show_frame("AboutPage")))
-                self.bind('9', self.shut_down)
+                self.bind('4', self.shut_down)
             elif page_name.__eq__("AboutPage"):
                 self.unbind('3')
             elif page_name.__eq__("SettingsPage"):
@@ -220,11 +230,6 @@ class DroneHackApp(tk.Tk):
         self.destroy()
 
 
-
-
-
-
-
 class MainPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -234,14 +239,14 @@ class MainPage(tk.Frame):
         areaMPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
         areaMPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
         
-        #initialize vertical scrollbar
-        vBarMP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
-        vBarMP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
-        vBarMP.config(command=areaMPCanvas.yview)
-        areaMPCanvas.configure(yscrollcommand=vBarMP.set)
-
-        #add horizonal bar for smaller devices
         if controller.deviceType == "small":
+            #initialize vertical scrollbar
+            vBarMP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+            vBarMP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+            vBarMP.config(command=areaMPCanvas.yview)
+            areaMPCanvas.configure(yscrollcommand=vBarMP.set)
+
+            #horizonal bar 
             hBarMP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
             hBarMP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
             hBarMP.config(command=areaMPCanvas.xview)
@@ -250,7 +255,7 @@ class MainPage(tk.Frame):
 
         #scrollable main page frame
         mainMPFrame = tk.Frame(areaMPCanvas, background = '#000000')
-        areaMPCanvas.create_window((0, 0), window=mainMPFrame, anchor = 'nw')
+        areaMPCanvas.create_window((0, 0), window = mainMPFrame, anchor = 'nw')
         
         #internal frames
         logoMPFrame = tk.Frame(mainMPFrame, background = '#000000')
@@ -352,34 +357,27 @@ class MainPage(tk.Frame):
                                    text = "[ 1 ] Start     ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("StartPage"))
-        startMPButton.grid(row=1, column = 10, sticky = 'w')
+        startMPButton.grid(row=1, column = 10, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         aboutMPButton = ttk.Button(optionsMPFrame,
                                    text = "[ 2 ] Settings  ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("SettingsPage"))
-        aboutMPButton.grid(row = 2, column = 10, sticky = 'w')
+        aboutMPButton.grid(row = 2, column = 10, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         settingsMPButton = ttk.Button(optionsMPFrame,
                                    text = "[ 3 ] About     ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("AboutPage"))
-        settingsMPButton.grid(row = 3, column = 10, sticky = 'w')
+        settingsMPButton.grid(row = 3, column = 10, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         shutDownMPButton = ttk.Button(optionsMPFrame,
-                                   text = "[ 9 ] Shut down ",
+                                   text = "[ 4 ] Shut down ",
                                    style = 'TButton',
                                    command = controller.shut_down)
-        shutDownMPButton.grid(row = 4, column = 10, sticky = 'w')
+        shutDownMPButton.grid(row = 4, column = 10, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
         
-        
-        #options frame dimensions
-        col_count, row_count = optionsMPFrame.grid_size()
-        for col in range(col_count):
-            optionsMPFrame.grid_columnconfigure(col, minsize = 30)
 
-        for row in range(row_count):
-            optionsMPFrame.grid_rowconfigure(row, minsize = 50)
 
         #update widgets
         mainMPFrame.update_idletasks()
@@ -396,40 +394,50 @@ class AboutPage(tk.Frame):
         #scrollable canvas
         areaAPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
         areaAPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
-        
-        #initialize vertical scrollbar
-        vBarAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
-        vBarAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
-        vBarAP.config(command=areaAPCanvas.yview)
-        areaAPCanvas.configure(yscrollcommand=vBarAP.set)
 
-        #add horizonal bar for smaller devices
         if controller.deviceType == "small":
+            #initialize vertical scrollbar
+            vBarAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+            vBarAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+            vBarAP.config(command=areaAPCanvas.yview)
+            areaAPCanvas.configure(yscrollcommand=vBarAP.set)
+
+            #add horizonal bar for smaller devices
             hBarAP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
             hBarAP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
             hBarAP.config(command=areaAPCanvas.xview)
             areaAPCanvas.configure(xscrollcommand=hBarAP.set)
 
         #internal scrollable about page frame
-        textAPFrame = tk.Frame(areaAPCanvas, background = '#000000')
-        areaAPCanvas.create_window((0, 0), window=textAPFrame, anchor = 'nw')
+        mainAPFrame = tk.Frame(areaAPCanvas, background = '#000000')
+        buttonsAPFrame = tk.Frame(areaAPCanvas, background = '#000000')
+        areaAPCanvas.create_window((0, 0), window=mainAPFrame, anchor = 'nw')
 
+        #internal frames for text and buttons
+        textAPFrame = tk.Frame(mainAPFrame, background = '#000000')
+        buttonsAPFrame = tk.Frame(mainAPFrame, background = '#000000')
+        textAPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        buttonsAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+        
         labelAbout = tk.Label(textAPFrame,
-                         text = "This is the info page \n Bla Bla",
+                         text = "This is the info page \n Bla Bla\n asgdfjcdvwkjjkblblbljhbljhbljhblhblhk",
                          background = '#000000',
                          foreground = '#ffffff',
                          font=controller.text_font)
     
-        exitAPButton = ttk.Button(textAPFrame,
-                                    text = "Back to Main Page",
+        exitAPButton = ttk.Button(buttonsAPFrame,
+                                    text = "[ 1 ] Main Page",
                                     style = 'TButton',
                                     command = lambda: controller.show_frame("MainPage"))
 
-        labelAbout.grid(row = 0, column = 0, padx = (10, 10))
-        exitAPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 10), pady = (30, 30))
+        labelAbout.grid(row = 0, column = 0, padx = (10, 10), pady = (30, 10), sticky = 'nsew')
+        exitAPButton.grid(row = 0, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (30, 30))
         
         #dynamically update widgets
-        textAPFrame.update_idletasks()
+        mainAPFrame.update_idletasks()
+
+        #configure scrollable area
+        areaAPCanvas.configure(scrollregion = areaAPCanvas.bbox(tk.ALL))
         
 
 
@@ -458,7 +466,7 @@ class SettingsPage(tk.Frame):
 
         #internal scrollable settings page frame
         displaySPFrame = tk.Frame(areaSPCanvas, background = '#000000')
-        areaSPCanvas.create_window((0, 0), window=displaySPFrame, anchor = 'nw')
+        areaSPCanvas.create_window((0, 0), window = displaySPFrame, anchor = 'nw')
         
         #bash command
         bashCommand = "ifconfig"
@@ -466,25 +474,55 @@ class SettingsPage(tk.Frame):
         output, error = process.communicate()
         
         #display area
-        infoSPText = tk.Text(displaySPFrame, height=12, width=100, background="blue")
+        infoSPText = tk.Text(displaySPFrame, height=12, width=100, background = "blue")
         infoSPText.grid(row = 0, column = 0, columnspan = 10, sticky = 'nsew')
-        infoSPText.tag_config("here", background="blue", foreground="green")
+        infoSPText.tag_config("here", background = "blue", foreground = "green")
         infoSPText.insert(1.0, output)
         
         #exit button
         exitSPButton = ttk.Button(displaySPFrame,
-                                  text = "Back to Main Page",
+                                  text = "[ 1 ] Main Page",
                                   style = 'TButton',
                                   command = lambda: controller.show_frame("MainPage"))
-        exitSPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 10), pady = (30, 30))
+        exitSPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (30, 30))
 
         #dynamically update widgets
         displaySPFrame.update_idletasks()
+
+        #configure scrollable area
+        areaSPCanvas.configure(scrollregion = areaSPCanvas.bbox(tk.ALL))
         
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
+        #scrollable canvas
+        areaStPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
+        areaStPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        #initialize vertical scrollbar
+        vBarStP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+        vBarStP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+        vBarStP.config(command=areaStPCanvas.yview)
+        areaStPCanvas.configure(yscrollcommand=vBarStP.set)
+
+        #add horizonal bar for smaller devices
+        if controller.deviceType == "small":
+            hBarStP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarStP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBarStP.config(command = areaStPCanvas.xview)
+            areaStPCanvas.configure(xscrollcommand = hBarStP.set)
+
+        #internal scrollable settings page frame
+        mainStPFrame = tk.Frame(areaStPCanvas, background = '#000000')
+        areaStPCanvas.create_window((0, 0), window = mainStPFrame, anchor = 'nw')
+
+        #internal frames for text, display and buttons
+        textStPFrame = tk.Frame(mainStPFrame, background = '#000000')
+        buttonsStPFrame = tk.Frame(mainStPFrame, background = '#000000')
+        textStPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        buttonsStPFrame.grid(row = 1, column = 0, sticky = 'nsew')
 
         #get network interfaces
         bashCommand = "ifconfig"
@@ -492,7 +530,7 @@ class StartPage(tk.Frame):
         output, error = process.communicate()
 
         #text label
-        textStPLabel = tk.Label(self,
+        textStPLabel = tk.Label(textStPFrame,
                                 text = "Select a network card to use in monitor mode:",
                                 background = '#000000',
                                 foreground = '#ffffff',
@@ -500,30 +538,36 @@ class StartPage(tk.Frame):
         textStPLabel.grid(row = 0, column = 0, sticky = 'nsew')
 
         #display network interfaces
-        self.outputStPText = tk.Text(self, height=12, background="blue")
-        self.outputStPText.grid(row = 1, column = 0, sticky = 'nsew')
-        self.outputStPText.tag_config("here", background="blue", foreground="green")
+        self.outputStPText = tk.Text(textStPFrame, height = 18, width = 98, background = "blue")
+        self.outputStPText.grid(row = 1, column = 0, sticky = 'nsew', padx = (10,1), pady = (10,20))
+        self.outputStPText.tag_config("here", background = "blue", foreground = "green")
         self.outputStPText.insert(1.0, output)
 
         #choose network interfaces
         NICs = controller.configurationSettings.getInterfaces()
         NICcounter = 0;
 
-        #NICs buttons
+        #generate NICs buttons
         for n in NICs:
             interfaceName = str(NICs[NICcounter])
-            ttk.Button(self,
+            ttk.Button(buttonsStPFrame,
                        text=interfaceName,
                        style = 'TButton',
-                       command = lambda idx = interfaceName: self.start_monitor_mode(idx)).grid(row = NICcounter+2, column = 0, sticky = 'nsew')
+                       command = lambda idx = interfaceName: self.start_monitor_mode(idx)).grid(row = NICcounter+2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
             NICcounter = NICcounter + 1
 
         #back to main menu button
-        backStPButton = ttk.Button(self,
-                                  text = "Back to Main Page",
+        backStPButton = ttk.Button(buttonsStPFrame,
+                                  text = "[ 1 ] Main Page",
                                   style = 'TButton',
                                   command = lambda: controller.show_frame("MainPage"))
-        backStPButton.grid(row = NICcounter+2, column = 0, sticky = 'nsew')
+        backStPButton.grid(row = NICcounter+2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+
+        #dynamically update widgets
+        mainStPFrame.update_idletasks()
+
+        #configure scrollable area
+        areaStPCanvas.configure(scrollregion = areaStPCanvas.bbox(tk.ALL))
         
     def start_monitor_mode(self, selectedInterface):
         self.outputStPText.delete(1.0, tk.END)
@@ -533,7 +577,7 @@ class StartPage(tk.Frame):
         checkKillCommand = "airmon-ng check kill"
         i = 0
         while i<5:
-            process = subprocess.Popen(checkKillCommand.split(), stdout=subprocess.PIPE)
+            process = subprocess.Popen(checkKillCommand.split(), stdout = subprocess.PIPE)
             output, error = process.communicate()
             if len(output)<4:
                 break
@@ -544,7 +588,7 @@ class StartPage(tk.Frame):
         startMonitorModeCommand = startMonitorModeCommand + " " + selectedInterface
 
         #start monitor mode on specified NIC
-        process = subprocess.Popen(startMonitorModeCommand.split(), stdout=subprocess.PIPE)
+        process = subprocess.Popen(startMonitorModeCommand.split(), stdout = subprocess.PIPE)
         output, error = process.communicate()
         
         if selectedInterface.endswith("mon"):
@@ -560,29 +604,70 @@ class SelectionPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        scanSePButton = ttk.Button(self,
-                                   text = "Scan network",
+        #scrollable canvas
+        areaSePCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
+        areaSePCanvas.grid(row = 0, column = 0, sticky = 'nsew')
+
+        if controller.deviceType == "small":
+            #initialize vertical scrollbar
+            vBarSeP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+            vBarSeP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+            vBarSeP.config(command=areaSePCanvas.yview)
+            areaSePCanvas.configure(yscrollcommand=vBarSeP.set)
+
+            #initialize horizonal bar
+            hBarSeP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarSeP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBarSeP.config(command=areaSePCanvas.xview)
+            areaSePCanvas.configure(xscrollcommand=hBarSeP.set)
+
+        #internal scrollable selection page frame
+        mainSePFrame = tk.Frame(areaSePCanvas, background = '#000000')
+        areaSePCanvas.create_window((0, 0), window=mainSePFrame, anchor = 'nw')
+
+        #internal frames to display buttons and text
+        textSePFrame = tk.Frame(mainSePFrame, background = '#000000')
+        textSePFrame.grid(row = 0, column = 0, sticky = 'nsew', padx = (10,10), pady = (20,30))
+        buttonsSePFrame = tk.Frame(mainSePFrame, background = '#000000')
+        buttonsSePFrame.grid(row = 1, column = 0, sticky = 'nsew')
+
+        #text label
+        textSePLabel = tk.Label(textSePFrame,
+                                text = "Select an option:",
+                                background = '#000000',
+                                foreground = '#ffffff',
+                                font=controller.text_font)
+        textSePLabel.grid(row = 0, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0))
+
+        scanSePButton = ttk.Button(buttonsSePFrame,
+                                   text = "[ 1 ] Scan network        ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("ScanNetworkPage"))
-        scanSePButton.grid(row = 1, column = 0, sticky = 'nsew')
+        scanSePButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
-        singleAttackSePButton = ttk.Button(self,
-                                           text = "Run single attack",
+        singleAttackSePButton = ttk.Button(buttonsSePFrame,
+                                           text = "[ 2 ] Run single attack   ",
                                            style = 'TButton',
                                            command = lambda: controller.show_frame("SingleAttackPage"))
-        singleAttackSePButton.grid(row = 2, column = 0, sticky = 'nsew')
+        singleAttackSePButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
-        broadcastSePButton = ttk.Button(self,
-                                        text = "Run broadcast attack",
+        broadcastSePButton = ttk.Button(buttonsSePFrame,
+                                        text = "[ 3 ] Run broadcast attack",
                                         style = 'TButton',
                                         command = lambda: controller.show_frame("BroadcastAttackPage"))
-        broadcastSePButton.grid(row = 3, column = 0, sticky = 'nsew')
+        broadcastSePButton.grid(row = 3, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
-        mainPageSePButton = ttk.Button(self,
-                                       text = "Main page",
+        mainPageSePButton = ttk.Button(buttonsSePFrame,
+                                       text = "[ 4 ] Back to Main Page   ",
                                        style = 'TButton',
                                        command = lambda: controller.show_frame("MainPage"))
-        mainPageSePButton.grid(row = 4, column = 0, sticky = 'nsew')
+        mainPageSePButton.grid(row = 4, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+
+        #dynamically update widgets
+        mainSePFrame.update_idletasks()
+
+        #configure scrollable area
+        areaSePCanvas.configure(scrollregion = areaSePCanvas.bbox(tk.ALL))
 
 
 
@@ -591,40 +676,81 @@ class ScanNetworkPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-        self.scanResults = []
+        #scrollable canvas
+        areaSNPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
+        areaSNPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        #initialize vertical scrollbar
+        vBarSNP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+        vBarSNP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+        vBarSNP.config(command = areaSNPCanvas.yview)
+        areaSNPCanvas.configure(yscrollcommand = vBarSNP.set)
+
+        #add horizonal bar for smaller devices
+        if controller.deviceType == "small":
+            hBarSnP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarSNP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBarSNP.config(command = areaSNPCanvas.xview)
+            areaSNPCanvas.configure(xscrollcommand = hBarSNP.set)
+
+        #internal scrollable selection page frame
+        mainSNPFrame = tk.Frame(areaSNPCanvas, background = '#000000')
+        areaSNPCanvas.create_window((0, 0), window=mainSNPFrame, anchor = 'nw')
+
+        #internal frames to display networks and buttons
+        displaySNPFrame = tk.Frame(mainSNPFrame, background = '#000000')
+        displaySNPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        buttonsSNPFrame = tk.Frame(mainSNPFrame, background = '#000000')
+        buttonsSNPFrame.grid(row = 1, column = 0, sticky = 'nsew')
 
         #display area
-        self.netsSNPText = tk.Text(self, height = 20, background = "blue")
-        self.netsSNPText.grid(row = 0, column = 0, sticky = 'nsew')
-        self.netsSNPText.tag_config("here", background="blue", foreground = "green")
+        self.netsSNPText = tk.Text(displaySNPFrame, height = 18, width = 98, background = "blue")
+        self.netsSNPText.grid(row = 0, column = 0, sticky = 'nsew', padx = (10,1), pady = (10,30))
+        self.netsSNPText.tag_config("here", background = "blue", foreground = "green")
         self.netsSNPText.insert(1.0, "Scan networks")
 
         #scan button
-        startScanSNPButton = ttk.Button(self,
-                                        text = "Scan networks",
+        startScanSNPButton = ttk.Button(buttonsSNPFrame,
+                                        text = "[ 1 ] Scan networks ",
                                         style = 'TButton',
                                         command = lambda: self.scanNetworks(5))
-        startScanSNPButton.grid(row = 1, column = 0, sticky = 'nsew')
-
-
+        startScanSNPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         #return button
-        returnSNPButton = ttk.Button(self,
-                                     text = "Return",
+        returnSNPButton = ttk.Button(buttonsSNPFrame,
+                                     text = "[ 2 ] Selection Page",
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
-        returnSNPButton.grid(row = 2, column = 0, sticky = 'nsew')
-        
+        returnSNPButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
+        #seconds selection combobox
+        secondsListSNPCombo = ttk.Combobox(buttonsSNPFrame,
+                                values = ["5 seconds",
+                                          "12 seconds",
+                                          "16 seconds"])
+        secondsListSNPCombo.current(0)
+
+        secondsListSNPCombo.grid(row = 3, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+        
+        #dynamically update widgets
+        mainSNPFrame.update_idletasks()
+
+        #configure scrollable area
+        areaSNPCanvas.configure(scrollregion=areaSNPCanvas.bbox(tk.ALL))
+
+        
     def scanNetworks(self, seconds):
+        #temporary array to store scan results
+        scanResults = []
+        
         #bash command for network scan
         bashCommand = "timeout 7 airodump-ng -w netOutput --output-format csv wlan1mon"
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
         output, error = process.communicate()
         
         #read results from csv file
         try:
-            self.scanResults = self.controller.readCSV("netOutput-01.csv")
+            scanResults = self.controller.readCSV("netOutput-01.csv")
 
             try:
                 os.remove("netOutput-01.csv")
@@ -636,7 +762,7 @@ class ScanNetworkPage(tk.Frame):
             counterCC = 0
 
             #save results as objects
-            for connection in self.scanResults:
+            for connection in scanResults:
                 #access points
                 if len(connection) == 15:
                     newAccessPoint = AccessPoint(connection, counterAP)
@@ -644,7 +770,7 @@ class ScanNetworkPage(tk.Frame):
                     counterAP += 1
                     
                 #connections
-                if len(connection)==7:
+                if len(connection) == 7:
                     newClientComs = ClientComs(connection, counterCC)
                     self.controller.listOfCC.append(newClientComs)
                     counterCC += 1
@@ -669,30 +795,64 @@ class SingleAttackPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        #scrollable canvas
+        areaSAPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
+        areaSAPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        #initialize vertical scrollbar
+        vBarSAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+        vBarSAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+        vBarSAP.config(command = areaSAPCanvas.yview)
+        areaSAPCanvas.configure(yscrollcommand = vBarSAP.set)
+
+        #add horizonal bar for smaller devices
+        if controller.deviceType == "small":
+            hBarSAP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarSAP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBarSAP.config(command = areaSAPCanvas.xview)
+            areaSAPCanvas.configure(xscrollcommand = hBarSAP.set)
+
+        #internal scrollable single DoS attack page frame
+        mainSAPFrame = tk.Frame(areaSAPCanvas, background = '#000000')
+        areaSAPCanvas.create_window((0, 0), window = mainSAPFrame, anchor = 'nw')
+
+        #internal frames to display networks and buttons
+        displaySAPFrame = tk.Frame(mainSAPFrame, background = '#000000')
+        displaySAPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        buttonsSAPFrame = tk.Frame(mainSAPFrame, background = '#000000')
+        buttonsSAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+
         #display area
-        self.detailsSAPText = tk.Text(self, height = 20, background = "blue")
-        self.detailsSAPText.grid(row = 0, column = 0, sticky = 'nsew')
-        self.detailsSAPText.tag_config("here", background="blue", foreground = "green")
+        self.detailsSAPText = tk.Text(displaySAPFrame,height = 18, width = 98, background = "blue")
+        self.detailsSAPText.grid(row = 0, column = 0, sticky = 'nsew', padx = (10,1), pady = (10,30))
+        self.detailsSAPText.tag_config("here", background = "blue", foreground = "green")
         self.detailsSAPText.insert(1.0, "Run single DoS attack\nREFRESH TO UPDATE LIST")
 
         #refresh button
-        refreshSAPButton = ttk.Button(self,
-                                      text = "Refresh",
+        refreshSAPButton = ttk.Button(buttonsSAPFrame,
+                                      text = "[ 1 ] Refresh List  ",
                                       style = 'TButton',
                                       command = lambda: self.refreshSA())
-        refreshSAPButton.grid(row = 1, column = 0, sticky = 'nsew')
+        refreshSAPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         #return button
-        returnSAPButton = ttk.Button(self,
-                                     text = "Return",
+        returnSAPButton = ttk.Button(buttonsSAPFrame,
+                                     text = "[ 2 ] Selection Page",
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
-        returnSAPButton.grid(row = 2, column = 0, sticky = 'nsew')
+        returnSAPButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+
+        #dynamically update widgets
+        mainSAPFrame.update_idletasks()
+
+        #configure scrollable area
+        areaSAPCanvas.configure(scrollregion = areaSAPCanvas.bbox(tk.ALL))
+        
 
     def refreshSA(self):
         if len(self.controller.listOfAP) < 1:
             self.detailsSAPText.delete(1.0, tk.END)
-            self.detailsSAPText.insert(1.0, "NO ACCESS POINTS FOUND\nPlease perform a network scan")
+            self.detailsSAPText.insert(1.0, "NO ACCESS POINTS FOUND:\nPlease perform a network scan")
         else:
             #record a number of access points
             numberOfAP = len(self.controller.listOfAP)
@@ -705,7 +865,7 @@ class SingleAttackPage(tk.Frame):
     def runSingleAttack(self):
         #bash command for broadcast scan
         bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " -c " + selectedMAC2 + " wlan1mon"
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
         output, error = process.communicate()
 
         
@@ -717,30 +877,64 @@ class BroadcastAttackPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
+        #scrollable canvas
+        areaBAPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
+        areaBAPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
+        
+        #initialize vertical scrollbar
+        vBarBAP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
+        vBarBAP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
+        vBarBAP.config(command = areaBAPCanvas.yview)
+        areaBAPCanvas.configure(yscrollcommand = vBarBAP.set)
+
+        #add horizonal bar for smaller devices
+        if controller.deviceType == "small":
+            hBarBAP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarBAP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
+            hBarBAP.config(command=areaBAPCanvas.xview)
+            areaBAPCanvas.configure(xscrollcommand=hBarBAP.set)
+
+        #internal scrollable broadcast DoS attack page frame
+        mainBAPFrame = tk.Frame(areaBAPCanvas, background = '#000000')
+        areaBAPCanvas.create_window((0, 0), window = mainBAPFrame, anchor = 'nw')
+
+        #internal frames to display networks and buttons
+        displayBAPFrame = tk.Frame(mainBAPFrame, background = '#000000')
+        displayBAPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        buttonsBAPFrame = tk.Frame(mainBAPFrame, background = '#000000')
+        buttonsBAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+
         #display area
-        self.detailsBAPText = tk.Text(self, height = 20, background = "blue")
-        self.detailsBAPText.grid(row = 0, column = 0, sticky = 'nsew')
-        self.detailsBAPText.tag_config("here", background="blue", foreground = "green")
+        self.detailsBAPText = tk.Text(displayBAPFrame, height = 18, width = 98, background = "blue")
+        self.detailsBAPText.grid(row = 0, column = 0, sticky = 'nsew', padx = (10,1), pady = (10,30))
+        self.detailsBAPText.tag_config("here", background = "blue", foreground = "green")
         self.detailsBAPText.insert(1.0, "Run broadcast DoS attack\nREFRESH TO UPDATE LIST")
 
         #refresh button
-        refreshBAPButton = ttk.Button(self,
-                                      text = "Refresh",
+        refreshBAPButton = ttk.Button(buttonsBAPFrame,
+                                      text = "[ 1 ] Refresh List  ",
                                       style = 'TButton',
                                       command = lambda: self.refreshBA())
-        refreshBAPButton.grid(row = 1, column = 0, sticky = 'nsew')
+        refreshBAPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         #return button
-        returnBAPButton = ttk.Button(self,
-                                     text = "Return",
+        returnBAPButton = ttk.Button(buttonsBAPFrame,
+                                     text = "[ 2 ] Selection Page",
                                      style = 'TButton',
                                      command = lambda: controller.show_frame("SelectionPage"))
-        returnBAPButton.grid(row = 2, column = 0, sticky = 'nsew')
+        returnBAPButton.grid(row = 2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+
+        #dynamically update widgets
+        mainBAPFrame.update_idletasks()
+
+        #configure scrollable area
+        areaBAPCanvas.configure(scrollregion=areaBAPCanvas.bbox(tk.ALL))
+        
 
     def refreshBA(self):
         if len(self.controller.listOfCC) < 1:
             self.detailsBAPText.delete(1.0, tk.END)
-            self.detailsBAPText.insert(1.0, "NO COMMUNICATIONS FOUND\nPlease perform a network scan")
+            self.detailsBAPText.insert(1.0, "NO COMMUNICATIONS FOUND:\nPlease perform a network scan")
         else:
             #record a number of client communications
             numberOfCC = len(self.controller.listOfCC)
@@ -750,18 +944,17 @@ class BroadcastAttackPage(tk.Frame):
                 tempStr = CC.CCtoString() + "\n\n"
                 self.detailsBAPText.insert(tk.END, tempStr)
 
+
         def runBroadcastAttack(self):
             #bash command for broadcast scan
             bashCommand = "aireplay-ng -0 10 -a " + selectedMAC + " wlan1mon"
-            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+            process = subprocess.Popen(bashCommand.split(), stdout = subprocess.PIPE)
             output, error = process.communicate()
 
 
 
-
-        #threads and stuff for later use
         '''
-        self.outputStPText = tk.Text(self, height=12, width=100, background="blue")
+        self.outputStPText = tk.Text(self, height=12, width=100, background = "blue")
         self.outputStPText.grid(row = 0, column = 0, sticky = 'nsew')
         
         scanStPButton = ttk.Button(self,
