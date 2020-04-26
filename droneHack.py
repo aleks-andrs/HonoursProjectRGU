@@ -95,6 +95,11 @@ class CurrentConfiguration:
 
     def getInterfaces(self):
         return self.interfacesNIC
+    
+    def setInterfaces(self, value):
+        self.interfacesNIC.clear()
+        self.interfacesNIC = value
+        
 
 class DroneHackApp(tk.Tk):
 
@@ -149,6 +154,7 @@ class DroneHackApp(tk.Tk):
 
         #application default settings
         self.interfaces = []
+        self.configurationSettings = CurrentConfiguration(self.interfaces)
         self.updateInterfaces()
         self.listOfAP = []
         self.listOfCC = []
@@ -256,8 +262,10 @@ class DroneHackApp(tk.Tk):
         connectionsList = [i for i in entryList if i != []]
         return connectionsList
 
+
     def getAllInterfaces(self):
         return os.listdir('/sys/class/net/')
+
 
     def updateInterfaces(self):
         self.shortenedInterfaces = []
@@ -271,7 +279,8 @@ class DroneHackApp(tk.Tk):
                 True
             else:
                 self.shortenedInterfaces.append(interface)
-        self.configurationSettings = CurrentConfiguration(self.shortenedInterfaces)
+        self.configurationSettings.setInterfaces(self.shortenedInterfaces)
+
         
     def shut_down(self, *args):
         self.destroy()
@@ -401,25 +410,25 @@ class MainPage(tk.Frame):
         optionsEmptyLineMPLabel.grid(row = 0, column = 20)
 
         startMPButton = ttk.Button(optionsMPFrame,
-                                   text = "[ 1 ] Start     ",
+                                   text = "[ 1 ] Start             ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("StartPage"))
         startMPButton.grid(row=1, column = 10, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         aboutMPButton = ttk.Button(optionsMPFrame,
-                                   text = "[ 2 ] Settings  ",
+                                   text = "[ 2 ] Monitor Mode OFF  ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("SettingsPage"))
         aboutMPButton.grid(row = 2, column = 10, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         settingsMPButton = ttk.Button(optionsMPFrame,
-                                   text = "[ 3 ] About     ",
+                                   text = "[ 3 ] About             ",
                                    style = 'TButton',
                                    command = lambda: controller.show_frame("AboutPage"))
         settingsMPButton.grid(row = 3, column = 10, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         shutDownMPButton = ttk.Button(optionsMPFrame,
-                                   text = "[ 4 ] Shut down ",
+                                   text = "[ 4 ] Shut down         ",
                                    style = 'TButton',
                                    command = controller.shut_down)
         shutDownMPButton.grid(row = 4, column = 10, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
@@ -498,13 +507,13 @@ class SettingsPage(tk.Frame):
         areaSPCanvas = tk.Canvas(self, background = '#000000', highlightthickness = 0)
         areaSPCanvas.grid(row = 0, column = 0, sticky = 'nsew')
         
-        #initialize vertical scrollbar
+        #initialize vertical scrollbar for smaller devices
         vBarSP = tk.Scrollbar(self, orient = tk.VERTICAL, background = '#00ff41')
         vBarSP.grid(row = 0, column = 1, rowspan = 1, sticky = 'ns')
         vBarSP.config(command=areaSPCanvas.yview)
         areaSPCanvas.configure(yscrollcommand=vBarSP.set)
 
-        #add horizonal bar for smaller devices
+        #initialize horizonal bar
         if controller.deviceType == "small":
             hBarSP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
             hBarSP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
@@ -515,30 +524,104 @@ class SettingsPage(tk.Frame):
         displaySPFrame = tk.Frame(areaSPCanvas, background = '#000000')
         areaSPCanvas.create_window((0, 0), window = displaySPFrame, anchor = 'nw')
         
-        #bash command
-        bashCommand = "ifconfig"
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        #internal frames for display and buttons
+        textSPFrame = tk.Frame(displaySPFrame, background = '#000000')
+        self.buttonsSPFrame = tk.Frame(displaySPFrame, background = '#000000')
+        textSPFrame.grid(row = 0, column = 0, sticky = 'nsew')
+        self.buttonsSPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+
+        #get network interfaces
+        bashCommandConfig = "ifconfig"
+        process = subprocess.Popen(bashCommandConfig.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
+
+        #text label
+        textStPLabel = tk.Label(textSPFrame,
+                                text = "Select a network card to switch off monitor mode:",
+                                background = '#000000',
+                                foreground = '#ffffff',
+                                font=controller.text_font)
+        textStPLabel.grid(row = 0, column = 0, sticky = 'nsew')
+
+        #display network interfaces
+        self.outputSPText = tk.Text(textSPFrame, height = 18, width = 98, background = "blue")
+        self.outputSPText.grid(row = 1, column = 0, sticky = 'nsew', padx = (10,1), pady = (10,20))
+        self.outputSPText.tag_config("here", background = "blue", foreground = "green")
+        self.outputSPText.insert(1.0, output)
+
+        #choose network interfaces
+        NICs = controller.configurationSettings.getInterfaces()
+        NICcounter = 0;
+
+        #generate NICs buttons
+        for n in NICs:
+            interfaceName = str(NICs[NICcounter])
+            ttk.Button(self.buttonsSPFrame,
+                       text=interfaceName,
+                       style = 'TButton',
+                       command = lambda index = interfaceName: self.stop_monitor_mode(index)).grid(row = NICcounter+2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+            NICcounter = NICcounter + 1
         
-        #display area
-        infoSPText = tk.Text(displaySPFrame, height=12, width=100, background = "blue")
-        infoSPText.grid(row = 0, column = 0, columnspan = 10, sticky = 'nsew')
-        infoSPText.tag_config("here", background = "blue", foreground = "green")
-        infoSPText.insert(1.0, output)
         
         #exit button
-        exitSPButton = ttk.Button(displaySPFrame,
+        exitSPButton = ttk.Button(self.buttonsSPFrame,
                                   text = "[ 1 ] Main Page",
                                   style = 'TButton',
                                   command = lambda: controller.show_frame("MainPage"))
-        exitSPButton.grid(row = 1, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (30, 30))
+        exitSPButton.grid(row = NICcounter+2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         #dynamically update widgets
         displaySPFrame.update_idletasks()
 
         #configure scrollable area
         areaSPCanvas.configure(scrollregion = areaSPCanvas.bbox(tk.ALL))
+
+    def updateButtons(self):
+        self.NICcounter = 0;
+
+        #choose network interfaces
+        self.NICs = self.controller.configurationSettings.getInterfaces()
+
+        #generate NICs buttons
+        for n in self.NICs:
+            interfaceName = str(self.NICs[self.NICcounter])
+            ttk.Button(self.buttonsSPFrame,
+                       text = interfaceName,
+                       style = 'TButton',
+                       command = lambda index = interfaceName: self.stop_monitor_mode(index)).grid(row = self.NICcounter+2, column = 0, sticky = 'nsew', padx = ((self.controller.screenViewX/3), 0), pady = (10, 0))
+            self.NICcounter = self.NICcounter + 1
+
+
+    def stop_monitor_mode(self, NICname):
+        #bash command for monitor mode switch off
+        stopMonitorModeCommand = "airmon-ng stop" 
+        stopMonitorModeCommand = stopMonitorModeCommand + " " + NICname
+
+        #stop monitor mode on specified NIC
+        processMonitorMode = subprocess.Popen(stopMonitorModeCommand.split(), stdout = subprocess.PIPE)
+        output, error = processMonitorMode.communicate()
         
+        if NICname.endswith("mon"):
+            #display results
+            self.outputSPText.delete(1.0, tk.END)
+            self.outputSPText.insert(1.0, output)
+            self.outputSPText.insert(tk.END, "\nMONITOR MODE DISABLED\n")
+            
+            #bash command for network manager turn on
+            startNetworkManagerCommand = "service network-manager start" 
+
+            #stop monitor mode on specified NIC
+            processNetwork = subprocess.Popen(startNetworkManagerCommand.split(), stdout = subprocess.PIPE)
+            output, error = processNetwork.communicate()
+        else:
+            self.outputSPText.delete(1.0, tk.END)
+            self.outputSPText.insert(1.0, "ERROR: CARD IS NOT IN THE MONITOR MODE")
+
+        #update button list
+        self.controller.updateInterfaces()
+        self.updateButtons()
+
+                   
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -562,18 +645,18 @@ class StartPage(tk.Frame):
             areaStPCanvas.configure(xscrollcommand = hBarStP.set)
 
         #internal scrollable settings page frame
-        mainStPFrame = tk.Frame(areaStPCanvas, background = '#000000')
-        areaStPCanvas.create_window((0, 0), window = mainStPFrame, anchor = 'nw')
+        self.mainStPFrame = tk.Frame(areaStPCanvas, background = '#000000')
+        areaStPCanvas.create_window((0, 0), window = self.mainStPFrame, anchor = 'nw')
 
         #internal frames for text, display and buttons
-        textStPFrame = tk.Frame(mainStPFrame, background = '#000000')
-        buttonsStPFrame = tk.Frame(mainStPFrame, background = '#000000')
+        textStPFrame = tk.Frame(self.mainStPFrame, background = '#000000')
+        self.buttonsStPFrame = tk.Frame(self.mainStPFrame, background = '#000000')
         textStPFrame.grid(row = 0, column = 0, sticky = 'nsew')
-        buttonsStPFrame.grid(row = 1, column = 0, sticky = 'nsew')
+        self.buttonsStPFrame.grid(row = 1, column = 0, sticky = 'nsew')
 
         #get network interfaces
-        bashCommand = "ifconfig"
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        displayInterfacesCommand = "ifconfig"
+        process = subprocess.Popen(displayInterfacesCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
         #text label
@@ -590,31 +673,37 @@ class StartPage(tk.Frame):
         self.outputStPText.tag_config("here", background = "blue", foreground = "green")
         self.outputStPText.insert(1.0, output)
 
-        #choose network interfaces
-        NICs = controller.configurationSettings.getInterfaces()
-        NICcounter = 0;
-
-        #generate NICs buttons
-        for n in NICs:
-            interfaceName = str(NICs[NICcounter])
-            ttk.Button(buttonsStPFrame,
-                       text=interfaceName,
-                       style = 'TButton',
-                       command = lambda idx = interfaceName: self.start_monitor_mode(idx)).grid(row = NICcounter+2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
-            NICcounter = NICcounter + 1
+        #dynamically display buttons
+        self.NICcounter = 0
+        self.updateButtons()
 
         #back to main menu button
-        backStPButton = ttk.Button(buttonsStPFrame,
+        backStPButton = ttk.Button(self.buttonsStPFrame,
                                   text = "[ 1 ] Main Page",
                                   style = 'TButton',
                                   command = lambda: controller.show_frame("MainPage"))
-        backStPButton.grid(row = NICcounter+2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
+        backStPButton.grid(row = self.NICcounter+2, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (10, 0))
 
         #dynamically update widgets
-        mainStPFrame.update_idletasks()
+        self.mainStPFrame.update_idletasks()
 
         #configure scrollable area
         areaStPCanvas.configure(scrollregion = areaStPCanvas.bbox(tk.ALL))
+
+    def updateButtons(self):
+        self.NICcounter = 0;
+
+        #choose network interfaces
+        self.NICs = self.controller.configurationSettings.getInterfaces()
+
+        #generate NICs buttons
+        for n in self.NICs:
+            interfaceName = str(self.NICs[self.NICcounter])
+            ttk.Button(self.buttonsStPFrame,
+                       text = interfaceName,
+                       style = 'TButton',
+                       command = lambda idx = interfaceName: self.start_monitor_mode(idx)).grid(row = self.NICcounter+2, column = 0, sticky = 'nsew', padx = ((self.controller.screenViewX/3), 0), pady = (10, 0))
+            self.NICcounter = self.NICcounter + 1
         
     def start_monitor_mode(self, selectedInterface):
         self.outputStPText.delete(1.0, tk.END)
@@ -643,8 +732,11 @@ class StartPage(tk.Frame):
         else:
             self.controller.configurationSettings.setNIC(selectedInterface)
             self.controller.configurationSettings.setNICmon(selectedInterface+"mon")
-            
+
+        self.controller.updateInterfaces()
+        self.updateButtons()
         self.controller.show_frame("SelectionPage")
+        
 
 class SelectionPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -735,7 +827,7 @@ class ScanNetworkPage(tk.Frame):
             areaSNPCanvas.configure(yscrollcommand = vBarSNP.set)
 
             #add horizonal bar
-            hBarSnP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
+            hBarSNP = tk.Scrollbar(self, orient = tk.HORIZONTAL, background = '#00ff41')
             hBarSNP.grid(row = 1, column = 0, rowspan = 1, sticky = 'ew')
             hBarSNP.config(command = areaSNPCanvas.xview)
             areaSNPCanvas.configure(xscrollcommand = hBarSNP.set)
