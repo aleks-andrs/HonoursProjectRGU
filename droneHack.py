@@ -326,7 +326,7 @@ class MainPage(tk.Frame):
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoEmptyLineMPLabel.grid(row = 0, column = 20, sticky = 'nsew')
+            logoEmptyLineMPLabel.grid(row = 0, column = 21, sticky = 'nsew')
          
             
             logo1 = tk.Label(logoMPFrame,
@@ -334,63 +334,113 @@ class MainPage(tk.Frame):
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logo1.grid(row = 1, column = 0, columnspan = 20, sticky = 'nsew')
+            logo1.grid(row = 1, column = 0, columnspan = 21, sticky = 'nsew')
 
-            logo2 = tk.Label(logoMPFrame,
-                             text = "#",
-                             background = '#000000',
-                             foreground = '#0000ff',
-                             font=controller.text_font)
-            logo2.grid(row = 2, column = 19, sticky = 'nsew')
+            rowNum = 2
+            columnNum = 0
+            while(columnNum < 6):
+                while(rowNum < 10):
+                    tk.Label(logoMPFrame,
+                                 text = "#",
+                                 background = '#000000',
+                                 foreground = '#0000ff',
+                                 font=controller.text_font).grid(row = rowNum, column = columnNum, sticky = 'nsew')
+                    rowNum += 1
+                rowNum = 2
+                columnNum += 1
 
-            logo3 = tk.Label(logoMPFrame,
-                             text = "#",
-                             background = '#000000',
-                             foreground = '#0000ff',
-                             font=controller.text_font)
-            logo3.grid(row = 3, column = 0, sticky = 'nsew')
+            rowNum = 2
+            columnNum = 15
+            while(columnNum < 21):
+                while(rowNum < 10):
+                    tk.Label(logoMPFrame,
+                                 text = "#",
+                                 background = '#000000',
+                                 foreground = '#0000ff',
+                                 font=controller.text_font).grid(row = rowNum, column = columnNum, sticky = 'nsew')
+                    rowNum += 1
+                rowNum = 2
+                columnNum += 1
 
-            logo4 = tk.Label(logoMPFrame,
-                             text = "#",
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "D",
                              background = '#000000',
-                             foreground = '#0000ff',
+                             foreground = '#00ff41',
                              font=controller.text_font)
-            logo4.grid(row = 4, column = 1, sticky = 'nsew')
+            logoLetter.grid(row = 4, column = 8, sticky = 'nsew')
 
-            logo5 = tk.Label(logoMPFrame,
-                             text = "L",
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "R",
                              background = '#000000',
-                             foreground = '#0000ff',
+                             foreground = '#00ff41',
                              font=controller.text_font)
-            logo5.grid(row = 5, column = 2, sticky = 'nsew')
+            logoLetter.grid(row = 4, column = 9, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "O",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 4, column = 10, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "N",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 4, column = 11, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "E",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 4, column = 12, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "R",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 6, column = 8, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "E",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 6, column = 9, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "C",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 6, column = 10, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "O",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 6, column = 11, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "N",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 6, column = 12, sticky = 'nsew')
+
             
-            logo6 = tk.Label(logoMPFrame,
-                             text = "#",
-                             background = '#000000',
-                             foreground = '#0000ff',
-                             font=controller.text_font)
-            logo6.grid(row = 6, column = 3, sticky = 'nsew')
             
-            logo7 = tk.Label(logoMPFrame,
-                             text = "#",
-                             background = '#000000',
-                             foreground = '#0000ff',
-                             font=controller.text_font)
-            logo7.grid(row = 7, column = 4, sticky = 'nsew')
-            
-            logo8 = tk.Label(logoMPFrame,
-                             text = "#",
-                             background = '#000000',
-                             foreground = '#0000ff',
-                             font=controller.text_font)
-            logo8.grid(row = 8, column = 5, sticky = 'nsew')
             
             logo100 = tk.Label(logoMPFrame,
                              text = "==============================================================",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logo100.grid(row = 9, column = 0, columnspan = 20, sticky = 'nsew')
+            logo100.grid(row = 9, column = 0, columnspan = 21, sticky = 'nsew')
 
             #logo frame dimensions set up
             col_count, row_count = logoMPFrame.grid_size()
