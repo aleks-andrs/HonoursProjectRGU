@@ -108,7 +108,7 @@ class DroneHackApp(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-        self.title("Drone Hack")
+        self.title("Drone Striker")
         
         #set up application style
         self.text_font = tkfont.Font(family = 'Consolas',
@@ -370,72 +370,91 @@ class MainPage(tk.Frame):
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 4, column = 8, sticky = 'nsew')
+            logoLetter.grid(row = 3, column = 8, sticky = 'nsew')
 
             logoLetter = tk.Label(logoMPFrame,
                              text = "R",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 4, column = 9, sticky = 'nsew')
+            logoLetter.grid(row = 3, column = 9, sticky = 'nsew')
 
             logoLetter = tk.Label(logoMPFrame,
                              text = "O",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 4, column = 10, sticky = 'nsew')
+            logoLetter.grid(row = 3, column = 10, sticky = 'nsew')
 
             logoLetter = tk.Label(logoMPFrame,
                              text = "N",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 4, column = 11, sticky = 'nsew')
+            logoLetter.grid(row = 3, column = 11, sticky = 'nsew')
 
             logoLetter = tk.Label(logoMPFrame,
                              text = "E",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 4, column = 12, sticky = 'nsew')
+            logoLetter.grid(row = 3, column = 12, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "S",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 5, column = 7, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "T",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 5, column = 8, sticky = 'nsew')
 
             logoLetter = tk.Label(logoMPFrame,
                              text = "R",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 6, column = 8, sticky = 'nsew')
+            logoLetter.grid(row = 5, column = 9, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "I",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 5, column = 10, sticky = 'nsew')
+
+            logoLetter = tk.Label(logoMPFrame,
+                             text = "K",
+                             background = '#000000',
+                             foreground = '#00ff41',
+                             font=controller.text_font)
+            logoLetter.grid(row = 5, column = 11, sticky = 'nsew')
 
             logoLetter = tk.Label(logoMPFrame,
                              text = "E",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 6, column = 9, sticky = 'nsew')
+            logoLetter.grid(row = 5, column = 12, sticky = 'nsew')
 
             logoLetter = tk.Label(logoMPFrame,
-                             text = "C",
+                             text = "R",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 6, column = 10, sticky = 'nsew')
+            logoLetter.grid(row = 5, column = 13, sticky = 'nsew')
 
             logoLetter = tk.Label(logoMPFrame,
-                             text = "O",
+                             text = "1.0",
                              background = '#000000',
                              foreground = '#00ff41',
                              font=controller.text_font)
-            logoLetter.grid(row = 6, column = 11, sticky = 'nsew')
-
-            logoLetter = tk.Label(logoMPFrame,
-                             text = "N",
-                             background = '#000000',
-                             foreground = '#00ff41',
-                             font=controller.text_font)
-            logoLetter.grid(row = 6, column = 12, sticky = 'nsew')
-
-            
+            logoLetter.grid(row = 7, column = 10, sticky = 'nsew')
             
             
             logo100 = tk.Label(logoMPFrame,
@@ -529,15 +548,23 @@ class AboutPage(tk.Frame):
         buttonsAPFrame.grid(row = 1, column = 0, sticky = 'nsew')
         
         labelAbout = tk.Label(textAPFrame,
-                         text = "This is the info page \n Bla Bla\n asgdfjcdvwkjjkblblbljhbljhbljhblhblhk",
-                         background = '#000000',
-                         foreground = '#ffffff',
-                         font=controller.text_font)
+                              text = "DRONE STRIKER 1.0 is an anti-UAV system developed for Kali" +
+                              "\nLinux distribution. The functionality provided in this " +
+                              "\napplication is intended for demonstration purposes only." +
+                              "\nThe anti-UAV system incorporates \"Monitor Mode\" activation"+
+                              "\nand deactivation services with following packet capturing(SCAN)"+
+                              "\nfunctionality, allowing to perform SINGULAR or BROADCAST" +
+                              "\ndeauthentication attack."
+                              "\n\n\nIN NO EVENT SHALL DEVELOPER OR CONTRIBUTORS BE LIABLE FOR ANY \nDIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY OR \nCONSEQUENTIAL DAMAGES SUSTAINED BY YOU OR A THIRD PARTY.",
+                              background = '#000000',
+                              foreground = '#ffffff',
+                              justify = tk.LEFT,
+                              font = controller.text_font)
     
         exitAPButton = ttk.Button(buttonsAPFrame,
-                                    text = "[ 1 ] Main Page",
-                                    style = 'TButton',
-                                    command = lambda: controller.show_frame("MainPage"))
+                                  text = "[ 1 ] Main Page",
+                                  style = 'TButton',
+                                  command = lambda: controller.show_frame("MainPage"))
 
         labelAbout.grid(row = 0, column = 0, padx = (10, 10), pady = (30, 10), sticky = 'nsew')
         exitAPButton.grid(row = 0, column = 0, sticky = 'nsew', padx = ((controller.screenViewX/3), 0), pady = (30, 30))
