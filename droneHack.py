@@ -70,6 +70,9 @@ class ClientComs:
         else:
             return(" ")
 
+    def getBSSIDCC(self):
+        return(self.BSSID)
+
     def getCounterCC(self):
         return(self.counterCC)
 
@@ -1156,13 +1159,14 @@ class SingleAttackPage(tk.Frame):
                     accessPointMAC = " "
                     for CC in self.controller.listOfCC:
                         if CC.getCounterCC() == str(self.selectedConSAPCombo.current()):
-                            accessPointMAC = CC.getMACaddressCC()
+                            accessPointMAC = CC.getBSSIDCC()
 
                     #get channel
                     channelSA = 1
                     for AP in self.controller.listOfAP:
-                        if AP.getMACaddressAP() == accessPointMAC:
+                        if AP.getMACaddressAP() in accessPointMAC:
                             channelSA = AP.getChannelAP()
+                    channelSA = str(channelSA)
 
                     #set card in the right channel
                     bashCommandChannel = "airmon-ng start " + selectedCardSA + " " + channelSA
